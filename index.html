@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AuraCare OS - Clinical Operations Hub">
+  <title>AuraCare OS - Clinical Operations Hub</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- Authentication Gateway (Clinic Login & Registration Portal) -->
+  <div class="auth-container" id="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
+        </div>
+        <span class="auth-logo-text">AuraCare OS</span>
+      </div>
+      
+      <!-- Login Section -->
+      <div id="login-form-section">
+        <h3 class="auth-title">Clinical Staff Sign-In</h3>
+        <p class="auth-subtitle">Authorized institutional access required.</p>
+        
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Secure Institutional Email</label>
+            <input type="email" id="login-email" class="form-control" placeholder="d.ross@hospital.org" required>
+            <span class="error-text hidden" id="err-login-email"></span>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+            <span class="error-text hidden" id="err-login-password"></span>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
+            <i data-lucide="log-in" style="width:14px; height:14px; margin-right:4px;"></i> Access Console
+          </button>
+        </form>
+        
+        <p class="auth-toggle-prompt">
+          New clinic member? <button type="button" class="auth-toggle-link" id="toggle-to-register">Register Account</button>
+        </p>
+      </div>
+      
+      <!-- Register Section -->
+      <div id="register-form-section" class="hidden">
+        <h3 class="auth-title">Register Clinical Profile</h3>
+        <p class="auth-subtitle">Create security keys for AuraCare access.</p>
+        
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Professional Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="Dr. Karen Vance" required>
+            <span class="error-text hidden" id="err-reg-name"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Institutional Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="k.vance@hospital.org" required>
+            <span class="error-text hidden" id="err-reg-email"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Secure Phone / Pager Line</label>
+            <input type="tel" id="reg-phone" class="form-control" placeholder="10-digit pager line" required>
+            <span class="error-text hidden" id="err-reg-phone"></span>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="reg-password">Security Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
+            <span class="error-text hidden" id="err-reg-password"></span>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
+            <i data-lucide="user-plus" style="width:14px; height:14px; margin-right:4px;"></i> Register Account
+          </button>
+        </form>
+        
+        <p class="auth-toggle-prompt">
+          Already registered? <button type="button" class="auth-toggle-link" id="toggle-to-login">Sign-In Here</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Main Command Shell (Hidden until logged in) -->
+  <div class="app-container hidden" id="app-container">
+    
+    <!-- Left Navigation Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <!-- Sidebar brand logo header -->
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
+        </div>
+        <div>
+          <span class="logo-text">AuraCare OS</span>
+        </div>
+        <span class="logo-version">v1.8</span>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="sidebar-nav">
+        <!-- Group 1: Operations -->
+        <div class="nav-section-title">Clinical Operations</div>
+        <a href="#dashboard" class="nav-item active">
+          <i data-lucide="layout-grid"></i>
+          <span>Operations Center</span>
+        </a>
+        <a href="#patients" class="nav-item">
+          <i data-lucide="heart"></i>
+          <span>Patients (EHR)</span>
+        </a>
+        <a href="#resources" class="nav-item">
+          <i data-lucide="layout"></i>
+          <span>Beds & Supply Map</span>
+        </a>
+
+        <!-- Group 2: Management -->
+        <div class="nav-section-title">Administration</div>
+        <a href="#staff" class="nav-item">
+          <i data-lucide="users"></i>
+          <span>Staff Shift Roster</span>
+        </a>
+        <a href="#appointments" class="nav-item">
+          <i data-lucide="calendar"></i>
+          <span>Consults Planner</span>
+        </a>
+        <a href="#billing" class="nav-item">
+          <i data-lucide="credit-card"></i>
+          <span>Billing Operations</span>
+        </a>
+      </nav>
+
+      <!-- Simple Sidebar Footer user info & logout -->
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="sidebar-avatar">DR</div>
+        <div class="user-info" style="flex:1;">
+          <span class="user-name" id="sidebar-user-name">Dr. Daniel Ross</span>
+          <span class="user-role">Clinical Staff</span>
+        </div>
+        <button class="header-btn" id="btn-logout" title="Secure Exit" style="width:28px; height:28px; background:none; border:none; color:var(--text-secondary); cursor:pointer;">
+          <i data-lucide="log-out" style="width:14px; height:14px;"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- App Content Layout Column -->
+    <main class="app-main">
+      
+      <!-- Top header bar -->
+      <header class="app-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <!-- Mobile Menu trigger -->
+          <button id="menu-toggle" class="menu-toggle header-btn" title="Toggle Sidebar">
+            <i data-lucide="menu"></i>
+          </button>
+          
+          <span style="font-family: var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--text-secondary);">Operations Console</span>
+        </div>
+
+        <!-- Global Action controls -->
+        <div class="header-right">
+          <!-- Global Search box -->
+          <div class="header-search">
+            <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px;"></i>
+            <input type="text" id="global-search-input" placeholder="Search patient name, EMR ID...">
+          </div>
+
+          <!-- System log notifications indicator (Toggles Slide-out Operations drawer) -->
+          <button class="header-btn" id="btn-alerts-toggle" title="Active Operations Log">
+            <i data-lucide="bell" style="width:14px; height:14px;"></i>
+            <span class="btn-badge">Live</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Two Column Layout: Workspace Viewport + Telemetry -->
+      <div class="clinical-workspace">
+        
+        <!-- Center Panel: Viewport -->
+        <div class="workspace-center" id="app-viewport">
+          <!-- Rendered views injected here -->
+        </div>
+
+        <!-- Right Panel: Telemetry Monitor -->
+        <div class="workspace-right">
+          <div class="workspace-right-header">
+            <i data-lucide="activity" style="color:var(--primary); width:14px; height:14px;"></i>
+            <span>Real-time Clinical Telemetry</span>
+          </div>
+          
+          <div class="workspace-right-content">
+            <!-- Resource gauge -->
+            <div class="telemetry-card">
+              <div class="flex-between" style="font-size:0.7rem; font-weight:600; margin-bottom:8px;">
+                <span>Bed Allocation Capacity</span>
+              </div>
+              <div id="telemetry-beds-gauge"></div>
+            </div>
+
+            <!-- Supply Alerts -->
+            <div class="telemetry-card" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+              <span style="font-size:0.7rem; font-weight:600; margin-bottom:6px; display:block;">Medical Stock Alarms</span>
+              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px;" id="telemetry-stock-alerts">
+                <!-- Low stock warnings rendered reactively -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Global Slide-out Operations Logs Drawer -->
+  <div class="alerts-drawer-overlay" id="alerts-drawer-overlay"></div>
+  <div class="alerts-drawer" id="alerts-drawer">
+    <div class="alerts-drawer-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="shield-alert" style="color:var(--danger); width:16px; height:16px;"></i>
+        <span style="font-weight:700; font-size:0.95rem; color:var(--text-primary);">Operations Logs Stream</span>
+      </div>
+      <button class="alerts-drawer-close" id="btn-alerts-close" title="Close Panel">×</button>
+    </div>
+    <div class="alerts-drawer-body">
+      <div class="alert-feed" id="global-alerts-feed">
+        <!-- Rendered reactively -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Reusable dynamic modals overlay placeholder -->
+  <div class="modal-overlay"></div>
+
+  <!-- Dynamic system notifications toasts parent -->
+  <div class="toasts-container"></div>
+
+  <!-- Lucide Vector Icons Library CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Javascript Modules (Script Chain) -->
+  <script src="js/store.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/toasts.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/charts.js"></script>
+  <script src="js/views/dashboard.js"></script>
+  <script src="js/views/patients.js"></script>
+  <script src="js/views/staff.js"></script>
+  <script src="js/views/resources.js"></script>
+  <script src="js/views/appointments.js"></script>
+  <script src="js/views/billing.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
