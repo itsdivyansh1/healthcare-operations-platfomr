@@ -1,9 +1,6 @@
-window.AuraCare = window.AuraCare || {};
-
-AuraCare.Charts = (function() {
-  
+const Charts = {
   // Render a responsive Line/Area SVG chart
-  function renderLineChart(containerId, data, labels, options = {}) {
+  renderLineChart: function(containerId, data, labels, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
@@ -125,10 +122,10 @@ AuraCare.Charts = (function() {
         tooltip.style.opacity = '0';
       });
     });
-  }
+  },
 
   // Render a simple segment-based Donut SVG
-  function renderDonutChart(containerId, dataset, options = {}) {
+  renderDonutChart: function(containerId, dataset, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -244,10 +241,10 @@ AuraCare.Charts = (function() {
         tooltip.style.opacity = '0';
       });
     });
-  }
+  },
 
   // Circular gauge for key metrics (e.g. 78% Occupancy)
-  function renderGauge(containerId, value, options = {}) {
+  renderGauge: function(containerId, value, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -284,10 +281,4 @@ AuraCare.Charts = (function() {
       </div>
     `;
   }
-
-  return {
-    renderLineChart,
-    renderDonutChart,
-    renderGauge
-  };
-})();
+};

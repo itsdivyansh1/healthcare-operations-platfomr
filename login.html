@@ -102,7 +102,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Initialize DB Seed
-      AuraCare.Store.init();
+      Store.init();
 
       // 2. Auth Session Check: If already signed in, go straight to dashboard
       if (sessionStorage.getItem('auracare_active_user')) {
@@ -218,7 +218,7 @@
         localStorage.setItem('auracare_users', JSON.stringify(users));
 
         sessionStorage.setItem('auracare_active_user', JSON.stringify(newUser));
-        AuraCare.Toasts.success('Profile created and logged in.');
+        Toasts.success('Profile created and logged in.');
 
         setTimeout(() => {
           window.location.href = 'dashboard.html';
@@ -265,7 +265,7 @@
 
         if (matchUser) {
           sessionStorage.setItem('auracare_active_user', JSON.stringify(matchUser));
-          AuraCare.Toasts.success(`Access granted. Welcome, ${matchUser.name}`);
+          Toasts.success(`Access granted. Welcome, ${matchUser.name}`);
           setTimeout(() => {
             window.location.href = 'dashboard.html';
           }, 800);

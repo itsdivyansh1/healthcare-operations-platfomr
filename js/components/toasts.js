@@ -1,22 +1,20 @@
-window.AuraCare = window.AuraCare || {};
+const Toasts = {
+  container: null,
 
-AuraCare.Toasts = (function() {
-  let container = null;
-
-  function getContainer() {
-    if (!container) {
-      container = document.querySelector('.toasts-container');
-      if (!container) {
-        container = document.createElement('div');
-        container.className = 'toasts-container';
-        document.body.appendChild(container);
+  getContainer: function() {
+    if (!this.container) {
+      this.container = document.querySelector('.toasts-container');
+      if (!this.container) {
+        this.container = document.createElement('div');
+        this.container.className = 'toasts-container';
+        document.body.appendChild(this.container);
       }
     }
-    return container;
-  }
+    return this.container;
+  },
 
-  function show(message, type = 'info', duration = 5000) {
-    const parent = getContainer();
+  show: function(message, type = 'info', duration = 5000) {
+    const parent = this.getContainer();
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
@@ -66,12 +64,10 @@ AuraCare.Toasts = (function() {
       clearTimeout(timer);
       remove();
     });
-  }
+  },
 
-  return {
-    success: (msg) => show(msg, 'success'),
-    warning: (msg) => show(msg, 'warning'),
-    error: (msg) => show(msg, 'error'),
-    info: (msg) => show(msg, 'info')
-  };
-})();
+  success: function(msg) { this.show(msg, 'success'); },
+  warning: function(msg) { this.show(msg, 'warning'); },
+  error: function(msg) { this.show(msg, 'error'); },
+  info: function(msg) { this.show(msg, 'info'); }
+};

@@ -1,24 +1,22 @@
-window.AuraCare = window.AuraCare || {};
+const Modal = {
+  overlay: null,
+  wrapper: null,
+  titleEl: null,
+  bodyEl: null,
+  footerEl: null,
+  initialized: false,
 
-AuraCare.Modal = (function() {
-  let overlay = null;
-  let wrapper = null;
-  let titleEl = null;
-  let bodyEl = null;
-  let footerEl = null;
-  let initialized = false;
+  init: function() {
+    if (this.initialized) return;
 
-  function init() {
-    if (initialized) return;
-
-    overlay = document.querySelector('.modal-overlay');
-    if (!overlay || !overlay.querySelector('.modal-wrapper')) {
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        document.body.appendChild(overlay);
+    this.overlay = document.querySelector('.modal-overlay');
+    if (!this.overlay || !this.overlay.querySelector('.modal-wrapper')) {
+      if (!this.overlay) {
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'modal-overlay';
+        document.body.appendChild(this.overlay);
       }
-      overlay.innerHTML = `
+      this.overlay.innerHTML = `
         <div class="modal-wrapper">
           <div class="modal-header flex-between">
             <h3 class="modal-title">Modal Title</h3>
@@ -30,46 +28,46 @@ AuraCare.Modal = (function() {
       `;
     }
 
-    wrapper = overlay.querySelector('.modal-wrapper');
-    titleEl = overlay.querySelector('.modal-title');
-    bodyEl = overlay.querySelector('.modal-body');
-    footerEl = overlay.querySelector('.modal-footer');
+    this.wrapper = this.overlay.querySelector('.modal-wrapper');
+    this.titleEl = this.overlay.querySelector('.modal-title');
+    this.bodyEl = this.overlay.querySelector('.modal-body');
+    this.footerEl = this.overlay.querySelector('.modal-footer');
 
     // Close events
-    overlay.querySelector('.modal-close').addEventListener('click', close);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close();
+    this.overlay.querySelector('.modal-close').addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', (e) => {
+      if (e.target === this.overlay) this.close();
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && overlay.classList.contains('open')) {
-        close();
+      if (e.key === 'Escape' && this.overlay.classList.contains('open')) {
+        this.close();
       }
     });
 
-    initialized = true;
-  }
+    this.initialized = true;
+  },
 
-  function open(title, contentHtml, buttons = []) {
-    init();
+  open: function(title, contentHtml, buttons = []) {
+    this.init();
 
     // Set title
-    titleEl.textContent = title;
+    this.titleEl.textContent = title;
 
     // Set body content (string or HTML element)
     if (typeof contentHtml === 'string') {
-      bodyEl.innerHTML = contentHtml;
+      this.bodyEl.innerHTML = contentHtml;
     } else {
-      bodyEl.innerHTML = '';
-      bodyEl.appendChild(contentHtml);
+      this.bodyEl.innerHTML = '';
+      this.bodyEl.appendChild(contentHtml);
     }
 
     // Set footer buttons
-    footerEl.innerHTML = '';
+    this.footerEl.innerHTML = '';
     if (buttons.length === 0) {
-      footerEl.style.display = 'none';
+      this.footerEl.style.display = 'none';
     } else {
-      footerEl.style.display = 'flex';
+      this.footerEl.style.display = 'flex';
       buttons.forEach(btnConfig => {
         const btn = document.createElement('button');
         btn.className = `btn ${btnConfig.className || 'btn-secondary'}`;
@@ -77,28 +75,23 @@ AuraCare.Modal = (function() {
         btn.addEventListener('click', (e) => {
           btnConfig.onClick(e, this);
         });
-        footerEl.appendChild(btn);
+        this.footerEl.appendChild(btn);
       });
     }
 
     // Open transition
-    overlay.classList.add('open');
+    this.overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 
     // Render Lucide icons inside modal
     if (window.lucide) {
       window.lucide.createIcons();
     }
-  }
+  },
 
-  function close() {
-    if (!overlay) return;
-    overlay.classList.remove('open');
+  close: function() {
+    if (!this.overlay) return;
+    this.overlay.classList.remove('open');
     document.body.style.overflow = '';
   }
-
-  return {
-    open,
-    close
-  };
-})();
+};

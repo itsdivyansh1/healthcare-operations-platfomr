@@ -1,7 +1,4 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Patients = {
+const PatientsView = {
   currentSearch: '',
   currentSeverityFilter: 'all',
   currentWardFilter: 'all',
@@ -25,7 +22,7 @@ AuraCare.Views.Patients = {
     if (searchInput) {
       const newSearchInput = searchInput.cloneNode(true);
       searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-      newSearchInput.addEventListener('input', AuraCare.Utils.debounce((e) => {
+      newSearchInput.addEventListener('input', Utils.debounce((e) => {
         this.currentSearch = e.target.value.trim();
         this.renderPatientRows();
       }, 150));
@@ -60,7 +57,7 @@ AuraCare.Views.Patients = {
     const tableBody = document.getElementById('patients-table-body');
     if (!tableBody) return;
 
-    let patients = AuraCare.Store.getPatients();
+    let patients = Store.getPatients();
 
     // Filter discharged vs active patients
     patients = patients.filter(p => !p.dischargeDate);
@@ -99,7 +96,7 @@ AuraCare.Views.Patients = {
     }
 
     tableBody.innerHTML = patients.map(p => {
-      const age = p.dob ? AuraCare.Utils.calculateAge(p.dob) : 'N/A';
+      const age = p.dob ? Utils.calculateAge(p.dob) : 'N/A';
       const genderShort = p.gender ? p.gender.substring(0, 1) : 'U';
       const severity = p.severity || 'low';
       const doctorName = p.doctor || 'Unassigned';
@@ -115,7 +112,7 @@ AuraCare.Views.Patients = {
             <div style="font-size:0.75rem; color:var(--text-muted);">${diagnosisText}</div>
           </td>
           <td class="nowrap">${age}y / ${genderShort}</td>
-          <td class="nowrap">${AuraCare.Utils.getSeverityBadge(severity)}</td>
+          <td class="nowrap">${Utils.getSeverityBadge(severity)}</td>
           <td class="nowrap">${location}</td>
           <td>${doctorName}</td>
           <td class="nowrap">
@@ -148,10 +145,10 @@ AuraCare.Views.Patients = {
     tableBody.querySelectorAll('.btn-discharge').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = btn.getAttribute('data-id');
-        const patient = AuraCare.Store.getPatient(id);
+        const patient = Store.getPatient(id);
         if (patient && confirm(`Are you sure you want to clinically discharge ${patient.name || 'this patient'}?`)) {
-          AuraCare.Store.dischargePatient(id);
-          AuraCare.Toasts.success(`Clinical discharge processed for ${patient.name}.`);
+          Store.dischargePatient(id);
+          Toasts.success(`Clinical discharge processed for ${patient.name}.`);
           this.renderPatientRows();
         }
       });
@@ -163,11 +160,11 @@ AuraCare.Views.Patients = {
   },
 
   openAdmissionModal: function(preselectedBedId) {
-    const availableBeds = AuraCare.Store.getBeds().filter(b => b.status === 'available');
-    const doctors = AuraCare.Store.getStaff().filter(s => s.role === 'Doctor');
-    const uniqueId = AuraCare.Utils.generateId('PAT', AuraCare.Store.getPatients());
+    const availableBeds = Store.getBeds().filter(b => b.status === 'available');
+    const doctors = Store.getStaff().filter(s => s.role === 'Doctor');
+    const uniqueId = Utils.generateId('PAT', Store.getPatients());
 
-    const hasPreselected = preselectedBedId && AuraCare.Store.getBeds().find(b => b.id === preselectedBedId);
+    const hasPreselected = preselectedBedId && Store.getBeds().find(b => b.id === preselectedBedId);
     if (hasPreselected && !availableBeds.some(b => b.id === preselectedBedId)) {
       availableBeds.push(hasPreselected);
     }
@@ -226,11 +223,11 @@ AuraCare.Views.Patients = {
       </form>
     `;
 
-    AuraCare.Modal.open('Admit New Patient', modalBody, [
+    Modal.open('Admit New Patient', modalBody, [
       {
         text: 'Cancel',
         className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
+        onClick: () => Modal.close()
       },
       {
         text: '<i data-lucide="check-circle2"></i> Complete Admission',
@@ -269,11 +266,11 @@ AuraCare.Views.Patients = {
               ]
             };
 
-            AuraCare.Store.addPatient(newPatient);
-            AuraCare.Store.allocateBed(bedId, uniqueId);
+            Store.addPatient(newPatient);
+            Store.allocateBed(bedId, uniqueId);
 
-            AuraCare.Toasts.success(`Patient ${name} admitted successfully.`);
-            AuraCare.Modal.close();
+            Toasts.success(`Patient ${name} admitted successfully.`);
+            Modal.close();
             this.renderPatientRows();
           }
         }
@@ -283,10 +280,10 @@ AuraCare.Views.Patients = {
 
   openPatientProfileModal: function(patientId) {
     const drawProfile = () => {
-      const p = AuraCare.Store.getPatient(patientId);
+      const p = Store.getPatient(patientId);
       if (!p) return;
       
-      const age = p.dob ? AuraCare.Utils.calculateAge(p.dob) : 'N/A';
+      const age = p.dob ? Utils.calculateAge(p.dob) : 'N/A';
       
       const history = p.history || [];
       const medications = p.medications || [];
@@ -327,7 +324,7 @@ AuraCare.Views.Patients = {
               <span>${p.gender || 'Unknown'}, ${age} Years</span> &bull; 
               <span style="font-family:monospace;">ID: ${p.id}</span>
             </div>
-            <div style="margin-top:8px;">${AuraCare.Utils.getSeverityBadge(p.severity || 'low')}</div>
+            <div style="margin-top:8px;">${Utils.getSeverityBadge(p.severity || 'low')}</div>
           </div>
 
           <!-- Vitals Panel Card -->
@@ -403,9 +400,9 @@ AuraCare.Views.Patients = {
         const temp = content.querySelector('#vit-temp').value;
 
         const updatedVitals = { bp, hr, temp, spo2 };
-        AuraCare.Store.updatePatient(patientId, { vitals: updatedVitals });
+        Store.updatePatient(patientId, { vitals: updatedVitals });
         
-        const patientData = AuraCare.Store.getPatient(patientId);
+        const patientData = Store.getPatient(patientId);
         if (!patientData.history) patientData.history = [];
         
         patientData.history.push({
@@ -415,18 +412,18 @@ AuraCare.Views.Patients = {
           text: `Vitals recorded: BP: ${bp}, HR: ${hr} bpm, SpO2: ${spo2}%, Temp: ${temp}.`
         });
         
-        const patients = AuraCare.Store.getPatients();
+        const patients = Store.getPatients();
         const pIndex = patients.findIndex(pat => pat.id === patientId);
         patients[pIndex] = patientData;
         localStorage.setItem('auracare_patients', JSON.stringify(patients));
         
-        AuraCare.Store.addLog(`Vitals checked for patient ${patientData.name || 'Anonymous'}: BP: ${bp}, HR: ${hr}, SpO2: ${spo2}%`, 'info');
+        Store.addLog(`Vitals checked for patient ${patientData.name || 'Anonymous'}: BP: ${bp}, HR: ${hr}, SpO2: ${spo2}%`, 'info');
         
         if (spo2 < 92) {
-          AuraCare.Store.addLog(`CRITICAL SPO2 LEVEL: Patient ${patientData.name || 'Anonymous'} SpO2 dropped to ${spo2}%`, 'critical');
-          AuraCare.Toasts.error(`SpO2 levels critically low (${spo2}%) for ${patientData.name || 'Anonymous'}!`);
+          Store.addLog(`CRITICAL SPO2 LEVEL: Patient ${patientData.name || 'Anonymous'} SpO2 dropped to ${spo2}%`, 'critical');
+          Toasts.error(`SpO2 levels critically low (${spo2}%) for ${patientData.name || 'Anonymous'}!`);
         } else {
-          AuraCare.Toasts.success('Vitals record updated.');
+          Toasts.success('Vitals record updated.');
         }
 
         drawProfile();
@@ -437,7 +434,7 @@ AuraCare.Views.Patients = {
         const input = content.querySelector('#new-med-input');
         const medName = input.value.trim();
         if (medName) {
-          const patientData = AuraCare.Store.getPatient(patientId);
+          const patientData = Store.getPatient(patientId);
           if (!patientData.medications) patientData.medications = [];
           if (!patientData.history) patientData.history = [];
           
@@ -450,13 +447,13 @@ AuraCare.Views.Patients = {
             text: `Prescribed medication: ${medName}.`
           });
 
-          const patients = AuraCare.Store.getPatients();
+          const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
           localStorage.setItem('auracare_patients', JSON.stringify(patients));
 
-          AuraCare.Store.addLog(`Medication ${medName} prescribed to ${patientData.name || 'Anonymous'}`, 'info');
-          AuraCare.Toasts.success('Medication prescribed.');
+          Store.addLog(`Medication ${medName} prescribed to ${patientData.name || 'Anonymous'}`, 'info');
+          Toasts.success('Medication prescribed.');
           
           input.value = '';
           drawProfile();
@@ -466,7 +463,7 @@ AuraCare.Views.Patients = {
       content.querySelectorAll('.btn-remove-med').forEach(btn => {
         btn.addEventListener('click', () => {
           const medToRemove = btn.getAttribute('data-med');
-          const patientData = AuraCare.Store.getPatient(patientId);
+          const patientData = Store.getPatient(patientId);
           if (!patientData.medications) patientData.medications = [];
           if (!patientData.history) patientData.history = [];
           
@@ -479,12 +476,12 @@ AuraCare.Views.Patients = {
             text: `Removed medication: ${medToRemove}.`
           });
 
-          const patients = AuraCare.Store.getPatients();
+          const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
           localStorage.setItem('auracare_patients', JSON.stringify(patients));
 
-          AuraCare.Toasts.warning('Medication discontinued.');
+          Toasts.warning('Medication discontinued.');
           drawProfile();
         });
       });
@@ -493,7 +490,7 @@ AuraCare.Views.Patients = {
         const text = content.querySelector('#timeline-note-text').value.trim();
         const signature = content.querySelector('#timeline-signature').value.trim() || 'Clinical Staff';
         if (text) {
-          const patientData = AuraCare.Store.getPatient(patientId);
+          const patientData = Store.getPatient(patientId);
           if (!patientData.history) patientData.history = [];
           
           patientData.history.push({
@@ -503,21 +500,21 @@ AuraCare.Views.Patients = {
             text: text
           });
 
-          const patients = AuraCare.Store.getPatients();
+          const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
           localStorage.setItem('auracare_patients', JSON.stringify(patients));
 
-          AuraCare.Toasts.success('Care note appended.');
+          Toasts.success('Care note appended.');
           drawProfile();
         }
       });
 
-      AuraCare.Modal.open(`Electronic Health Record (EMR) - #${p.id}`, content, [
+      Modal.open(`Electronic Health Record (EMR) - #${p.id}`, content, [
         {
           text: 'Close EHR Profile',
           className: 'btn-secondary',
-          onClick: () => AuraCare.Modal.close()
+          onClick: () => Modal.close()
         }
       ]);
       

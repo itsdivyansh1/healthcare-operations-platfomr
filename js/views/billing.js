@@ -1,7 +1,4 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Billing = {
+const BillingView = {
   currentItems: [], // Temporary storage for invoice creation
   currentStatusFilter: 'all', // Active table filter state
 
@@ -12,7 +9,7 @@ AuraCare.Views.Billing = {
   },
 
   updateFinancialSummary: function() {
-    const bills = AuraCare.Store.getBilling();
+    const bills = Store.getBilling();
     const totalInvoiced = bills.reduce((sum, b) => sum + b.amount, 0);
     const paidBills = bills.filter(b => b.status === 'paid');
     const totalCollected = paidBills.reduce((sum, b) => sum + b.amount, 0);
@@ -27,9 +24,9 @@ AuraCare.Views.Billing = {
     const valCountEl = document.getElementById('val-invoices-count');
     const rateEl = document.getElementById('val-collection-rate');
 
-    if (valTotalEl) valTotalEl.textContent = AuraCare.Utils.formatCurrency(totalInvoiced);
-    if (valCollectedEl) valCollectedEl.textContent = AuraCare.Utils.formatCurrency(totalCollected);
-    if (valOutstandingEl) valOutstandingEl.textContent = AuraCare.Utils.formatCurrency(totalOutstanding);
+    if (valTotalEl) valTotalEl.textContent = Utils.formatCurrency(totalInvoiced);
+    if (valCollectedEl) valCollectedEl.textContent = Utils.formatCurrency(totalCollected);
+    if (valOutstandingEl) valOutstandingEl.textContent = Utils.formatCurrency(totalOutstanding);
     if (valCountEl) valCountEl.textContent = bills.length;
     if (rateEl) rateEl.textContent = `${collectionRate}% Collection Rate`;
 
@@ -115,7 +112,7 @@ AuraCare.Views.Billing = {
     const tableBody = document.getElementById('billing-table-body');
     if (!tableBody) return;
 
-    let bills = AuraCare.Store.getBilling();
+    let bills = Store.getBilling();
 
     // Apply Status Filter
     if (this.currentStatusFilter === 'pending') {
@@ -153,7 +150,7 @@ AuraCare.Views.Billing = {
             <div style="font-weight:600;">${b.patientName}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">ID: ${b.patientId}</div>
           </td>
-          <td><strong>${AuraCare.Utils.formatCurrency(b.amount)}</strong></td>
+          <td><strong>${Utils.formatCurrency(b.amount)}</strong></td>
           <td>${b.date}</td>
           <td>${b.dueDate}</td>
           <td><span class="badge ${statusBadge}">${b.status.toUpperCase()}</span></td>
@@ -170,8 +167,8 @@ AuraCare.Views.Billing = {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         if (confirm(`Authorize financial settlement for Invoice ${id}?`)) {
-          AuraCare.Store.payInvoice(id);
-          AuraCare.Toasts.success('Payment successfully processed.');
+          Store.payInvoice(id);
+          Toasts.success('Payment successfully processed.');
           this.init(); // Refresh summaries & list
         }
       });
@@ -190,11 +187,11 @@ AuraCare.Views.Billing = {
   },
 
   openCreateInvoiceModal: function() {
-    const patients = AuraCare.Store.getPatients().filter(p => !p.dischargeDate && p.billingStatus === 'unbilled');
-    const uniqueId = AuraCare.Utils.generateId('INV', AuraCare.Store.getBilling());
+    const patients = Store.getPatients().filter(p => !p.dischargeDate && p.billingStatus === 'unbilled');
+    const uniqueId = Utils.generateId('INV', Store.getBilling());
 
     if (patients.length === 0) {
-      AuraCare.Modal.open('Create Invoice', `
+      Modal.open('Create Invoice', `
         <div style="text-align:center; padding:16px; color:var(--text-muted); font-size:0.85rem;">
           <i data-lucide="check" style="width:32px; height:32px; margin-bottom:8px; color:var(--success); display:block; margin:0 auto 8px auto;"></i>
           <p>No active unbilled patients waiting in the directory.</p>
@@ -203,7 +200,7 @@ AuraCare.Views.Billing = {
         {
           text: 'Close',
           className: 'btn-secondary',
-          onClick: () => AuraCare.Modal.close()
+          onClick: () => Modal.close()
         }
       ]);
       return;
@@ -257,11 +254,11 @@ AuraCare.Views.Billing = {
 
     this.currentItems = [];
 
-    AuraCare.Modal.open('Create New Invoice', modalBody, [
+    Modal.open('Create New Invoice', modalBody, [
       {
         text: 'Cancel',
         className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
+        onClick: () => Modal.close()
       },
       {
         text: '<i data-lucide="check"></i> Finalize Invoice',
@@ -290,9 +287,9 @@ AuraCare.Views.Billing = {
               items: this.currentItems
             };
 
-            AuraCare.Store.addInvoice(newInvoice);
-            AuraCare.Toasts.success(`Invoice ${uniqueId} generated successfully.`);
-            AuraCare.Modal.close();
+            Store.addInvoice(newInvoice);
+            Toasts.success(`Invoice ${uniqueId} generated successfully.`);
+            Modal.close();
             this.init(); // RefreshSummaries & list
           }
         }
@@ -318,14 +315,14 @@ AuraCare.Views.Billing = {
           itemsTbody.innerHTML = this.currentItems.map((item, idx) => `
             <tr>
               <td>${item.desc}</td>
-              <td style="text-align:right;">${AuraCare.Utils.formatCurrency(item.cost)}</td>
+              <td style="text-align:right;">${Utils.formatCurrency(item.cost)}</td>
               <td style="text-align:right;"><button type="button" class="btn-del-item" data-idx="${idx}" style="color:var(--danger); cursor:pointer; background:none; border:none; font-weight:700;">×</button></td>
             </tr>
           `).join('');
 
           // Update total
           const sum = this.currentItems.reduce((s, i) => s + i.cost, 0);
-          totalEl.textContent = `Total Bill: ${AuraCare.Utils.formatCurrency(sum)}`;
+          totalEl.textContent = `Total Bill: ${Utils.formatCurrency(sum)}`;
 
           // Clear inputs
           descInput.value = '';
@@ -355,14 +352,14 @@ AuraCare.Views.Billing = {
   },
 
   openReceiptModal: function(invoiceId) {
-    const bills = AuraCare.Store.getBilling();
+    const bills = Store.getBilling();
     const bill = bills.find(b => b.id === invoiceId);
     if (!bill) return;
 
     const itemsHtml = (bill.items || []).map(item => `
       <div class="flex-between" style="font-size:0.8rem; border-bottom:1px dashed var(--border-color); padding:4px 0;">
         <span>${item.desc}</span>
-        <span style="font-family:monospace;">${AuraCare.Utils.formatCurrency(item.cost)}</span>
+        <span style="font-family:monospace;">${Utils.formatCurrency(item.cost)}</span>
       </div>
     `).join('');
 
@@ -397,7 +394,7 @@ AuraCare.Views.Billing = {
           ${itemsHtml}
           <div class="flex-between" style="font-size:0.95rem; font-weight:700; margin-top:12px; border-top:1px solid var(--border-color); padding-top:8px;">
             <span>Grand Total Settled:</span>
-            <span style="color:var(--success); font-family:monospace;">${AuraCare.Utils.formatCurrency(bill.amount)}</span>
+            <span style="color:var(--success); font-family:monospace;">${Utils.formatCurrency(bill.amount)}</span>
           </div>
         </div>
 
@@ -408,7 +405,7 @@ AuraCare.Views.Billing = {
       </div>
     `;
 
-    AuraCare.Modal.open('Billing Receipt', modalBody, [
+    Modal.open('Billing Receipt', modalBody, [
       {
         text: 'Print Receipt',
         className: 'btn-primary',
@@ -419,7 +416,7 @@ AuraCare.Views.Billing = {
       {
         text: 'Close',
         className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
+        onClick: () => Modal.close()
       }
     ]);
   }

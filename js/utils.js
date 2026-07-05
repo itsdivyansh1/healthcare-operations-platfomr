@@ -1,6 +1,4 @@
-window.AuraCare = window.AuraCare || {};
-
-AuraCare.Utils = {
+const Utils = {
   // Format currency
   formatCurrency: function(value) {
     return new Intl.NumberFormat('en-US', {

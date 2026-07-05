@@ -1,10 +1,7 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Dashboard = {
+const DashboardView = {
   init: function() {
-    const patients = AuraCare.Store.getPatients();
-    const beds = AuraCare.Store.getBeds();
+    const patients = Store.getPatients();
+    const beds = Store.getBeds();
     
     // Draw Admissions and Wards Maps
     this.afterRender(patients, beds);
@@ -25,8 +22,8 @@ AuraCare.Views.Dashboard = {
     }
 
     const container = document.getElementById('dashboard-trend-container');
-    if (container && window.AuraCare.Charts) {
-      AuraCare.Charts.renderLineChart('dashboard-trend-container', counts, dates, {
+    if (container && typeof Charts !== 'undefined') {
+      Charts.renderLineChart('dashboard-trend-container', counts, dates, {
         strokeColor: 'var(--primary)',
         unit: 'admissions'
       });
@@ -122,14 +119,14 @@ AuraCare.Views.Dashboard = {
         const msg = document.getElementById('broadcast-msg-console').value;
         const type = document.getElementById('broadcast-type-console').value;
         
-        AuraCare.Store.addLog(msg, type);
+        Store.addLog(msg, type);
         
         if (type === 'critical') {
-          AuraCare.Toasts.error('CRITICAL ALARM DISPATCHED!');
+          Toasts.error('CRITICAL ALARM DISPATCHED!');
         } else if (type === 'warning') {
-          AuraCare.Toasts.warning('Warning log dispatched.');
+          Toasts.warning('Warning log dispatched.');
         } else {
-          AuraCare.Toasts.success('Information log dispatched.');
+          Toasts.success('Information log dispatched.');
         }
 
         newForm.reset();

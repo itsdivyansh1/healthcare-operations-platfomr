@@ -1,15 +1,12 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Resources = {
+const ResourcesView = {
   init: function() {
     this.renderWards();
     this.renderInventory();
   },
 
   renderWards: function() {
-    const beds = AuraCare.Store.getBeds();
-    const patients = AuraCare.Store.getPatients();
+    const beds = Store.getBeds();
+    const patients = Store.getPatients();
 
     const icuContainer = document.getElementById('ward-grid-icu');
     const erContainer = document.getElementById('ward-grid-emergency');
@@ -62,7 +59,7 @@ AuraCare.Views.Resources = {
   },
 
   renderInventory: function() {
-    const inv = AuraCare.Store.getInventory();
+    const inv = Store.getInventory();
     const container = document.getElementById('inventory-list-container');
     if (!container) return;
 
@@ -99,18 +96,18 @@ AuraCare.Views.Resources = {
         const id = btn.getAttribute('data-id');
         const adjustValue = parseInt(btn.getAttribute('data-val'), 10);
         
-        AuraCare.Store.adjustStock(id, adjustValue);
+        Store.adjustStock(id, adjustValue);
         this.renderInventory();
       });
     });
   },
 
   handleBedClick: function(bedId) {
-    const beds = AuraCare.Store.getBeds();
+    const beds = Store.getBeds();
     const bed = beds.find(b => b.id === bedId);
     if (!bed) return;
 
-    const patients = AuraCare.Store.getPatients();
+    const patients = Store.getPatients();
 
     if (bed.status !== 'available') {
       const patient = patients.find(p => p.id === bed.patientId);
@@ -132,15 +129,15 @@ AuraCare.Views.Resources = {
         </div>
       `;
 
-      AuraCare.Modal.open(`Bed Mapping Status - ${bedId}`, modalHtml, [
+      Modal.open(`Bed Mapping Status - ${bedId}`, modalHtml, [
         {
           text: 'Discharge Patient',
           className: 'btn-danger',
           onClick: () => {
             if (confirm(`Clinically discharge ${patient.name || 'admitted patient'} from Bed ${bedId}?`)) {
-              AuraCare.Store.dischargePatient(patient.id);
-              AuraCare.Toasts.success(`Patient ${patient.name} discharged successfully.`);
-              AuraCare.Modal.close();
+              Store.dischargePatient(patient.id);
+              Toasts.success(`Patient ${patient.name} discharged successfully.`);
+              Modal.close();
               this.renderWards();
             }
           }
@@ -149,7 +146,7 @@ AuraCare.Views.Resources = {
           text: 'View EHR Profile',
           className: 'btn-primary',
           onClick: () => {
-            AuraCare.Modal.close();
+            Modal.close();
             setTimeout(() => {
               // Redirect to patients page with search parameter if desired, or open EMR modal there
               window.location.href = `patients.html?id=${patient.id}`;
@@ -161,7 +158,7 @@ AuraCare.Views.Resources = {
       const unassignedPatients = patients.filter(p => !p.bed && !p.dischargeDate);
 
       if (unassignedPatients.length === 0) {
-        AuraCare.Modal.open(`Allocate Bed - ${bedId}`, `
+        Modal.open(`Allocate Bed - ${bedId}`, `
           <div style="text-align:center; padding:16px; color:var(--text-muted); font-size:0.85rem;">
             <i data-lucide="check" style="width:32px; height:32px; margin-bottom:8px; color:var(--success); display:block; margin:0 auto 8px auto;"></i>
             <p>All active hospital admissions are currently mapped to beds.</p>
@@ -171,13 +168,13 @@ AuraCare.Views.Resources = {
           {
             text: 'Close',
             className: 'btn-secondary',
-            onClick: () => AuraCare.Modal.close()
+            onClick: () => Modal.close()
           },
           {
             text: 'Admit & Assign Patient',
             className: 'btn-primary',
             onClick: () => {
-              AuraCare.Modal.close();
+              Modal.close();
               setTimeout(() => {
                 window.location.href = `patients.html?admit=true&bedId=${bedId}`;
               }, 250);
@@ -202,17 +199,17 @@ AuraCare.Views.Resources = {
         </form>
       `;
 
-      AuraCare.Modal.open(`Allocate Bed - ${bedId}`, modalHtml, [
+      Modal.open(`Allocate Bed - ${bedId}`, modalHtml, [
         {
           text: 'Cancel',
           className: 'btn-secondary',
-          onClick: () => AuraCare.Modal.close()
+          onClick: () => Modal.close()
         },
         {
           text: 'Admit New Patient',
           className: 'btn-secondary',
           onClick: () => {
-            AuraCare.Modal.close();
+            Modal.close();
             setTimeout(() => {
               window.location.href = `patients.html?admit=true&bedId=${bedId}`;
             }, 250);
@@ -225,9 +222,9 @@ AuraCare.Views.Resources = {
             const select = document.getElementById('alloc-patient');
             const patientId = select.value;
             if (patientId) {
-              AuraCare.Store.allocateBed(bedId, patientId);
-              AuraCare.Toasts.success('Bed allocated.');
-              AuraCare.Modal.close();
+              Store.allocateBed(bedId, patientId);
+              Toasts.success('Bed allocated.');
+              Modal.close();
               this.renderWards();
             }
           }

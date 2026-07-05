@@ -5,7 +5,9 @@
   border-radius: var(--radius-md);
   padding: 24px; /* Increased padding for better clinical layout */
   box-shadow: var(--shadow-sm);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   position: relative;
 }
 
@@ -67,13 +69,13 @@
 }
 
 .ecg-grid::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(15, 118, 110, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 118, 110, 0.1) 1px, transparent 1px);
   background-size: 8px 8px;
@@ -356,7 +358,7 @@
 }
 
 .emr-timeline::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
@@ -382,8 +384,12 @@
   z-index: 2;
 }
 
-.timeline-marker.success { border-color: var(--success); }
-.timeline-marker.danger { border-color: var(--danger); }
+.timeline-marker.success {
+  border-color: var(--success);
+}
+.timeline-marker.danger {
+  border-color: var(--danger);
+}
 
 .timeline-content {
   background-color: var(--bg-app);
@@ -425,7 +431,10 @@
 
 .bed-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); /* Enlarged grid cells */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(95px, 1fr)
+  ); /* Enlarged grid cells */
   gap: 12px;
 }
 
@@ -468,20 +477,47 @@
   text-transform: uppercase;
 }
 
-.bed-card.available { border-color: hsla(134, 61%, 40%, 0.2); }
-.bed-card.available:hover { border-color: var(--success); }
-.bed-card.available .bed-icon { color: var(--success); }
-.bed-card.available .bed-status { background-color: var(--success-glow); color: var(--success); }
+.bed-card.available {
+  border-color: hsla(134, 61%, 40%, 0.2);
+}
+.bed-card.available:hover {
+  border-color: var(--success);
+}
+.bed-card.available .bed-icon {
+  color: var(--success);
+}
+.bed-card.available .bed-status {
+  background-color: var(--success-glow);
+  color: var(--success);
+}
 
-.bed-card.occupied { border-color: hsla(200, 85%, 50%, 0.2); }
-.bed-card.occupied:hover { border-color: var(--primary); }
-.bed-card.occupied .bed-icon { color: var(--primary); }
-.bed-card.occupied .bed-status { background-color: var(--primary-glow); color: var(--primary); }
+.bed-card.occupied {
+  border-color: hsla(200, 85%, 50%, 0.2);
+}
+.bed-card.occupied:hover {
+  border-color: var(--primary);
+}
+.bed-card.occupied .bed-icon {
+  color: var(--primary);
+}
+.bed-card.occupied .bed-status {
+  background-color: var(--primary-glow);
+  color: var(--primary);
+}
 
-.bed-card.critical { border-color: hsla(354, 85%, 56%, 0.2); }
-.bed-card.critical:hover { border-color: var(--danger); }
-.bed-card.critical .bed-icon { color: var(--danger); }
-.bed-card.critical .bed-status { background-color: var(--danger-glow); color: var(--danger); }
+.bed-card.critical {
+  border-color: hsla(354, 85%, 56%, 0.2);
+}
+.bed-card.critical:hover {
+  border-color: var(--danger);
+}
+.bed-card.critical .bed-icon {
+  color: var(--danger);
+}
+.bed-card.critical .bed-status {
+  background-color: var(--danger-glow);
+  color: var(--danger);
+}
 
 /* Visually Enhanced Consult Planner Cards */
 .apt-card-agenda {
@@ -548,4 +584,3 @@
   max-width: 350px;
   animation: slideInRight var(--transition-normal) forwards;
 }
-

@@ -1,38 +1,36 @@
-window.AuraCare = window.AuraCare || {};
-
-AuraCare.App = (function() {
-  function init() {
+const App = {
+  init: function() {
     // 1. Initialize local storage seed data
-    AuraCare.Store.init();
+    Store.init();
 
     // 2. Auth Session Check: Redirect to login if session is active check fails
-    if (!isLoggedIn()) {
+    if (!this.isLoggedIn()) {
       window.location.href = 'login.html';
       return;
     }
 
     // 3. Update user details in sidebar footer
-    updateSidebarUserData();
+    this.updateSidebarUserData();
 
     // 4. Setup global layout events (mobile sidebars, logouts, drawers)
-    setupGlobalEvents();
+    this.setupGlobalEvents();
 
     // 5. Update global panel values (gauges, low stock alarms, drawer logs)
-    updateGlobalPanels();
+    this.updateGlobalPanels();
 
     // 6. Reactive Store subscriptions to redraw sidebars
-    AuraCare.Store.subscribe('all', () => {
-      if (isLoggedIn()) {
-        updateGlobalPanels();
+    Store.subscribe('all', () => {
+      if (this.isLoggedIn()) {
+        this.updateGlobalPanels();
       }
     });
-  }
+  },
 
-  function isLoggedIn() {
+  isLoggedIn: function() {
     return sessionStorage.getItem('auracare_active_user') !== null;
-  }
+  },
 
-  function updateSidebarUserData() {
+  updateSidebarUserData: function() {
     const userJson = sessionStorage.getItem('auracare_active_user');
     if (!userJson) return;
 
@@ -56,10 +54,10 @@ AuraCare.App = (function() {
       }
       avatarEl.textContent = initials;
     }
-  }
+  },
 
-  function updateGlobalPanels() {
-    const alerts = AuraCare.Store.getSystemLogs();
+  updateGlobalPanels: function() {
+    const alerts = Store.getSystemLogs();
     
     // 1. Redraw Slide-out Alerts Drawer Feed
     const globalAlertsFeed = document.getElementById('global-alerts-feed');
@@ -97,21 +95,21 @@ AuraCare.App = (function() {
     }
 
     // 2. Redraw Right Panel Telemetry Beds Gauge
-    const beds = AuraCare.Store.getBeds();
+    const beds = Store.getBeds();
     const occupied = beds.filter(b => b.status !== 'available').length;
     const totalBeds = beds.length;
     const occupancyRate = totalBeds > 0 ? Math.round((occupied / totalBeds) * 100) : 0;
     
     const gaugeEl = document.getElementById('telemetry-beds-gauge');
-    if (gaugeEl && window.AuraCare.Charts) {
-      AuraCare.Charts.renderGauge('telemetry-beds-gauge', occupancyRate, {
+    if (gaugeEl && typeof Charts !== 'undefined') {
+      Charts.renderGauge('telemetry-beds-gauge', occupancyRate, {
         color: occupancyRate > 80 ? 'var(--danger)' : 'var(--primary)',
         labelText: 'Occupied'
       });
     }
 
     // 3. Redraw Right Panel Low Stocks Alerts
-    const inventory = AuraCare.Store.getInventory();
+    const inventory = Store.getInventory();
     const lowStockAlertsEl = document.getElementById('telemetry-stock-alerts');
     if (lowStockAlertsEl) {
       const lowStockItems = inventory.filter(item => item.stock < item.minStock);
@@ -138,9 +136,9 @@ AuraCare.App = (function() {
     if (window.lucide) {
       window.lucide.createIcons();
     }
-  }
+  },
 
-  function setupGlobalEvents() {
+  setupGlobalEvents: function() {
     // 1. Mobile off-canvas menu toggle
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('app-sidebar');
@@ -192,7 +190,7 @@ AuraCare.App = (function() {
       logoutBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to securely logout from the operations console?')) {
           sessionStorage.removeItem('auracare_active_user');
-          AuraCare.Toasts.warning('Securely logged out.');
+          Toasts.warning('Securely logged out.');
           setTimeout(() => {
             window.location.href = 'login.html';
           }, 600);
@@ -200,14 +198,9 @@ AuraCare.App = (function() {
       });
     }
   }
-
-  return {
-    init: init,
-    updateGlobalPanels: updateGlobalPanels
-  };
-})();
+};
 
 // Launch application checks on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  AuraCare.App.init();
+  App.init();
 });

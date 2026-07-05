@@ -1,7 +1,4 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Staff = {
+const StaffView = {
   currentRoleFilter: 'all',
 
   init: function() {
@@ -45,7 +42,7 @@ AuraCare.Views.Staff = {
     const tableBody = document.getElementById('staff-table-body');
     if (!tableBody) return;
 
-    let staff = AuraCare.Store.getStaff();
+    let staff = Store.getStaff();
 
     // Filter by role
     if (this.currentRoleFilter !== 'all') {
@@ -101,8 +98,8 @@ AuraCare.Views.Staff = {
       select.addEventListener('change', (e) => {
         const id = select.getAttribute('data-id');
         const newStatus = e.target.value;
-        AuraCare.Store.updateStaffStatus(id, newStatus);
-        AuraCare.Toasts.info(`Duty status changed to: ${newStatus.toUpperCase()}`);
+        Store.updateStaffStatus(id, newStatus);
+        Toasts.info(`Duty status changed to: ${newStatus.toUpperCase()}`);
         this.renderStaffRows();
       });
     });
@@ -112,8 +109,8 @@ AuraCare.Views.Staff = {
       btn.addEventListener('click', () => {
         const name = btn.getAttribute('data-name');
         const phone = btn.getAttribute('data-phone');
-        AuraCare.Store.addLog(`Clinical page broadcasted to: ${name} (${phone})`, 'info');
-        AuraCare.Toasts.success(`Page dispatch sent to ${name}.`);
+        Store.addLog(`Clinical page broadcasted to: ${name} (${phone})`, 'info');
+        Toasts.success(`Page dispatch sent to ${name}.`);
       });
     });
 
@@ -123,7 +120,7 @@ AuraCare.Views.Staff = {
   },
 
   openAddStaffModal: function() {
-    const uniqueId = AuraCare.Utils.generateId('STF', AuraCare.Store.getStaff());
+    const uniqueId = Utils.generateId('STF', Store.getStaff());
 
     const modalBody = `
       <form id="staff-registration-form" class="form-grid" novalidate>
@@ -170,11 +167,11 @@ AuraCare.Views.Staff = {
       </form>
     `;
 
-    AuraCare.Modal.open('Register Roster Member', modalBody, [
+    Modal.open('Register Roster Member', modalBody, [
       {
         text: 'Cancel',
         className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
+        onClick: () => Modal.close()
       },
       {
         text: '<i data-lucide="check"></i> Register Roster',
@@ -236,9 +233,9 @@ AuraCare.Views.Staff = {
             status: 'on-duty'
           };
 
-          AuraCare.Store.addStaff(newStaff);
-          AuraCare.Toasts.success(`${name} has been added to roster.`);
-          AuraCare.Modal.close();
+          Store.addStaff(newStaff);
+          Toasts.success(`${name} has been added to roster.`);
+          Modal.close();
           this.renderStaffRows();
         }
       }

@@ -1,7 +1,4 @@
-window.AuraCare = window.AuraCare || {};
-window.AuraCare.Views = window.AuraCare.Views || {};
-
-AuraCare.Views.Appointments = {
+const AppointmentsView = {
   init: function() {
     this.bindEvents();
     this.renderAppointments();
@@ -26,7 +23,7 @@ AuraCare.Views.Appointments = {
     const tableBody = document.getElementById('appointments-table-body');
     if (!tableBody) return;
 
-    const apts = AuraCare.Store.getAppointments();
+    const apts = Store.getAppointments();
 
     if (apts.length === 0) {
       tableBody.innerHTML = `
@@ -78,8 +75,8 @@ AuraCare.Views.Appointments = {
     tableBody.querySelectorAll('.btn-complete-apt').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        AuraCare.Store.updateAppointmentStatus(id, 'completed');
-        AuraCare.Toasts.success('Consultation marked completed.');
+        Store.updateAppointmentStatus(id, 'completed');
+        Toasts.success('Consultation marked completed.');
         this.renderAppointments();
       });
     });
@@ -88,8 +85,8 @@ AuraCare.Views.Appointments = {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         if (confirm('Cancel this scheduled check-up?')) {
-          AuraCare.Store.updateAppointmentStatus(id, 'cancelled');
-          AuraCare.Toasts.warning('Consultation cancelled.');
+          Store.updateAppointmentStatus(id, 'cancelled');
+          Toasts.warning('Consultation cancelled.');
           this.renderAppointments();
         }
       });
@@ -101,9 +98,9 @@ AuraCare.Views.Appointments = {
   },
 
   openBookConsultModal: function() {
-    const patients = AuraCare.Store.getPatients().filter(p => !p.dischargeDate);
-    const doctors = AuraCare.Store.getStaff().filter(s => s.role === 'Doctor' && s.status !== 'off-duty');
-    const uniqueId = AuraCare.Utils.generateId('APT', AuraCare.Store.getAppointments());
+    const patients = Store.getPatients().filter(p => !p.dischargeDate);
+    const doctors = Store.getStaff().filter(s => s.role === 'Doctor' && s.status !== 'off-duty');
+    const uniqueId = Utils.generateId('APT', Store.getAppointments());
 
     const patientOptions = patients.map(p => `<option value="${p.id}|${p.name}">${p.name} (${p.id})</option>`).join('');
     const doctorOptions = doctors.map(d => `<option value="${d.name}">${d.name} (${d.specialty})</option>`).join('');
@@ -139,11 +136,11 @@ AuraCare.Views.Appointments = {
       </form>
     `;
 
-    AuraCare.Modal.open('Book Outpatient Consult', modalBody, [
+    Modal.open('Book Outpatient Consult', modalBody, [
       {
         text: 'Cancel',
         className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
+        onClick: () => Modal.close()
       },
       {
         text: '<i data-lucide="check"></i> Confirm Appointment',
@@ -167,9 +164,9 @@ AuraCare.Views.Appointments = {
               status: 'scheduled'
             };
 
-            AuraCare.Store.addAppointment(newApt);
-            AuraCare.Toasts.success(`Consultation booked successfully.`);
-            AuraCare.Modal.close();
+            Store.addAppointment(newApt);
+            Toasts.success(`Consultation booked successfully.`);
+            Modal.close();
             this.renderAppointments();
           }
         }
