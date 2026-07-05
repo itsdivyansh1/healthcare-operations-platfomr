@@ -43,7 +43,17 @@ AuraCare.Views.Appointments = {
 
     tableBody.innerHTML = apts.map(a => {
       const statusBadge = a.status === 'scheduled' ? 'bg-primary-glow text-primary' : (a.status === 'completed' ? 'bg-success-glow text-success' : 'bg-danger-glow text-danger');
-      const actionButton = a.status === 'scheduled' ? `<button class="btn btn-success btn-sm flex-center btn-complete-apt" data-id="${a.id}"><i data-lucide="check" style="width:12px;height:12px;"></i> Finish</button>` : '';
+      let actionsCell = '';
+      if (a.status === 'scheduled') {
+        actionsCell = `
+          <button class="btn btn-success btn-sm flex-center btn-complete-apt" data-id="${a.id}"><i data-lucide="check" style="width:12px;height:12px;"></i> Finish</button>
+          <button class="btn btn-secondary btn-sm flex-center btn-cancel-apt" data-id="${a.id}"><i data-lucide="x" style="width:12px;height:12px;"></i> Cancel</button>
+        `;
+      } else if (a.status === 'completed') {
+        actionsCell = `<span style="color: var(--success); font-size: 0.725rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding-right: 8px;"><i data-lucide="check-circle-2" style="width:12px; height:12px;"></i> Closed</span>`;
+      } else {
+        actionsCell = `<span style="color: var(--text-muted); font-size: 0.725rem; display: inline-flex; align-items: center; gap: 4px; padding-right: 8px;"><i data-lucide="minus-circle" style="width:12px; height:12px;"></i> Cancelled</span>`;
+      }
 
       return `
         <tr>
@@ -58,8 +68,7 @@ AuraCare.Views.Appointments = {
           <td><span class="badge ${statusBadge}">${a.status.toUpperCase()}</span></td>
           <td style="text-align:right;">
             <div style="display:flex; gap:6px; justify-content:flex-end;">
-              ${actionButton}
-              <button class="btn btn-secondary btn-sm flex-center btn-cancel-apt" data-id="${a.id}" ${a.status !== 'scheduled' ? 'disabled' : ''}><i data-lucide="x" style="width:12px;height:12px;"></i> Cancel</button>
+              ${actionsCell}
             </div>
           </td>
         </tr>

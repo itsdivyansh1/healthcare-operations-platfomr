@@ -162,12 +162,17 @@ AuraCare.Views.Patients = {
     }
   },
 
-  openAdmissionModal: function() {
+  openAdmissionModal: function(preselectedBedId) {
     const availableBeds = AuraCare.Store.getBeds().filter(b => b.status === 'available');
     const doctors = AuraCare.Store.getStaff().filter(s => s.role === 'Doctor');
     const uniqueId = AuraCare.Utils.generateId('PAT', AuraCare.Store.getPatients());
 
-    const bedOptions = availableBeds.map(b => `<option value="${b.id}">${b.id} (${b.ward})</option>`).join('');
+    const hasPreselected = preselectedBedId && AuraCare.Store.getBeds().find(b => b.id === preselectedBedId);
+    if (hasPreselected && !availableBeds.some(b => b.id === preselectedBedId)) {
+      availableBeds.push(hasPreselected);
+    }
+
+    const bedOptions = availableBeds.map(b => `<option value="${b.id}"${b.id === preselectedBedId ? ' selected' : ''}>${b.id} (${b.ward})</option>`).join('');
     const docOptions = doctors.map(d => `<option value="${d.name}">${d.name} (${d.specialty})</option>`).join('');
 
     const modalBody = `

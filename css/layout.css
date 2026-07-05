@@ -293,6 +293,10 @@
 .header-search input {
   font-size: 0.8rem;
   width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text-primary);
 }
 
 .header-btn {

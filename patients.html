@@ -83,10 +83,6 @@
         </div>
 
         <div class="header-right">
-          <div class="header-search">
-            <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px;"></i>
-            <input type="text" id="global-search-input" placeholder="Search patient name, EMR ID...">
-          </div>
           <button class="header-btn" id="btn-alerts-toggle" title="Active Operations Log">
             <i data-lucide="bell" style="width:14px; height:14px;"></i>
             <span class="btn-badge">Live</span>
@@ -115,9 +111,9 @@
               <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:16px;">
                 <div class="form-group" style="margin-bottom:0;">
                   <label class="form-label" style="font-size:0.75rem;">Search Patient Profile</label>
-                  <div class="header-search" style="border:1px solid var(--border-color); background-color:var(--bg-app); border-radius:var(--radius-md); padding:0 12px; height:34px;">
-                    <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px; margin-right:6px;"></i>
-                    <input type="text" id="patient-search-input" style="background:none; border:none; height:100%; width:100%; font-size:0.825rem; color:var(--text-primary);" placeholder="Search patient name, ID, diagnosis...">
+                  <div class="header-search" style="height:34px; box-sizing:border-box;">
+                    <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px;"></i>
+                    <input type="text" id="patient-search-input" placeholder="Search patient name, ID, diagnosis...">
                   </div>
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
@@ -241,6 +237,14 @@
         }, 300);
       }
 
+      const admitParam = urlParams.get('admit');
+      const bedIdParam = urlParams.get('bedId');
+      if (admitParam === 'true') {
+        setTimeout(() => {
+          AuraCare.Views.Patients.openAdmissionModal(bedIdParam);
+        }, 300);
+      }
+
       // 2. Initialize EMR Directory Controller
       AuraCare.Views.Patients.init();
 
@@ -249,17 +253,6 @@
         AuraCare.Views.Patients.renderPatientRows();
       });
 
-      // Synchronize global search bar query
-      const globalSearch = document.getElementById('global-search-input');
-      if (globalSearch) {
-        globalSearch.addEventListener('input', (e) => {
-          const val = e.target.value.trim();
-          AuraCare.Views.Patients.currentSearch = val;
-          const searchInput = document.getElementById('patient-search-input');
-          if (searchInput) searchInput.value = val;
-          AuraCare.Views.Patients.renderPatientRows();
-        });
-      }
     });
   </script>
 

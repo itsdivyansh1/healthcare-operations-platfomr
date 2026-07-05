@@ -165,12 +165,23 @@ AuraCare.Views.Resources = {
           <div style="text-align:center; padding:16px; color:var(--text-muted); font-size:0.85rem;">
             <i data-lucide="check" style="width:32px; height:32px; margin-bottom:8px; color:var(--success); display:block; margin:0 auto 8px auto;"></i>
             <p>All active hospital admissions are currently mapped to beds.</p>
+            <p style="margin-top:8px; color:var(--text-secondary);">You can admit a new patient directly into Bed <strong>${bedId}</strong>.</p>
           </div>
         `, [
           {
             text: 'Close',
             className: 'btn-secondary',
             onClick: () => AuraCare.Modal.close()
+          },
+          {
+            text: 'Admit & Assign Patient',
+            className: 'btn-primary',
+            onClick: () => {
+              AuraCare.Modal.close();
+              setTimeout(() => {
+                window.location.href = `patients.html?admit=true&bedId=${bedId}`;
+              }, 250);
+            }
           }
         ]);
         return;
@@ -196,6 +207,16 @@ AuraCare.Views.Resources = {
           text: 'Cancel',
           className: 'btn-secondary',
           onClick: () => AuraCare.Modal.close()
+        },
+        {
+          text: 'Admit New Patient',
+          className: 'btn-secondary',
+          onClick: () => {
+            AuraCare.Modal.close();
+            setTimeout(() => {
+              window.location.href = `patients.html?admit=true&bedId=${bedId}`;
+            }, 250);
+          }
         },
         {
           text: 'Map Bed Location',
