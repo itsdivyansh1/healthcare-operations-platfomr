@@ -27,11 +27,11 @@ const App = {
   },
 
   isLoggedIn: function() {
-    return sessionStorage.getItem('auracare_active_user') !== null;
+    return sessionStorage.getItem('opscare_active_user') !== null;
   },
 
   updateSidebarUserData: function() {
-    const userJson = sessionStorage.getItem('auracare_active_user');
+    const userJson = sessionStorage.getItem('opscare_active_user');
     if (!userJson) return;
 
     const user = JSON.parse(userJson);
@@ -189,7 +189,7 @@ const App = {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to securely logout from the operations console?')) {
-          sessionStorage.removeItem('auracare_active_user');
+          sessionStorage.removeItem('opscare_active_user');
           Toasts.warning('Securely logged out.');
           setTimeout(() => {
             window.location.href = 'login.html';

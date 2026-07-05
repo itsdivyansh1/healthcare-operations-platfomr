@@ -415,7 +415,7 @@ const PatientsView = {
         const patients = Store.getPatients();
         const pIndex = patients.findIndex(pat => pat.id === patientId);
         patients[pIndex] = patientData;
-        localStorage.setItem('auracare_patients', JSON.stringify(patients));
+        localStorage.setItem('opscare_patients', JSON.stringify(patients));
         
         Store.addLog(`Vitals checked for patient ${patientData.name || 'Anonymous'}: BP: ${bp}, HR: ${hr}, SpO2: ${spo2}%`, 'info');
         
@@ -450,7 +450,7 @@ const PatientsView = {
           const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
-          localStorage.setItem('auracare_patients', JSON.stringify(patients));
+          localStorage.setItem('opscare_patients', JSON.stringify(patients));
 
           Store.addLog(`Medication ${medName} prescribed to ${patientData.name || 'Anonymous'}`, 'info');
           Toasts.success('Medication prescribed.');
@@ -479,7 +479,7 @@ const PatientsView = {
           const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
-          localStorage.setItem('auracare_patients', JSON.stringify(patients));
+          localStorage.setItem('opscare_patients', JSON.stringify(patients));
 
           Toasts.warning('Medication discontinued.');
           drawProfile();
@@ -503,7 +503,7 @@ const PatientsView = {
           const patients = Store.getPatients();
           const pIndex = patients.findIndex(pat => pat.id === patientId);
           patients[pIndex] = patientData;
-          localStorage.setItem('auracare_patients', JSON.stringify(patients));
+          localStorage.setItem('opscare_patients', JSON.stringify(patients));
 
           Toasts.success('Care note appended.');
           drawProfile();

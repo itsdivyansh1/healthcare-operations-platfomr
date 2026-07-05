@@ -1,13 +1,13 @@
 const Store = {
   // Keys for LocalStorage
   KEYS: {
-    PATIENTS: 'auracare_patients',
-    STAFF: 'auracare_staff',
-    BEDS: 'auracare_beds',
-    APPOINTMENTS: 'auracare_appointments',
-    INVENTORY: 'auracare_inventory',
-    BILLING: 'auracare_billing',
-    LOGS: 'auracare_logs'
+    PATIENTS: 'opscare_patients',
+    STAFF: 'opscare_staff',
+    BEDS: 'opscare_beds',
+    APPOINTMENTS: 'opscare_appointments',
+    INVENTORY: 'opscare_inventory',
+    BILLING: 'opscare_billing',
+    LOGS: 'opscare_logs'
   },
 
   // Predefined / Initial Seed Data

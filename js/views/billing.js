@@ -366,7 +366,7 @@ const BillingView = {
     const modalBody = `
       <div style="font-family:var(--font-body); padding:8px 0;">
         <div style="text-align:center; border-bottom:2px solid var(--border-color); padding-bottom:16px; margin-bottom:16px;">
-          <h4 style="font-size:1.15rem; font-weight:700; color:var(--text-primary);">AuraCare General Hospital</h4>
+          <h4 style="font-size:1.15rem; font-weight:700; color:var(--text-primary);">OpsCare General Hospital</h4>
           <span style="font-size:0.75rem; color:var(--text-secondary);">100 Operations Blvd, Sector 4 &bull; Billing Receipt</span>
         </div>
 
@@ -400,7 +400,7 @@ const BillingView = {
 
         <div style="text-align:center; color:var(--text-muted); font-size:0.7rem; margin-top:20px; border-top:1px dashed var(--border-color); padding-top:12px;">
           <p><i data-lucide="shield-check" style="width:12px; vertical-align:middle; color:var(--success); margin-right:4px;"></i> Transaction officially finalized under ledger ID: ${bill.id}.</p>
-          <p style="margin-top:2px;">AuraCare OS Financial Security Protocol Secured.</p>
+          <p style="margin-top:2px;">OpsCare Financial Security Protocol Secured.</p>
         </div>
       </div>
     `;

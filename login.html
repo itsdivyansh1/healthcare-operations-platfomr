@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AuraCare OS - Clinical Access Portal">
-  <title>AuraCare OS - Clinical Sign-In</title>
+  <meta name="description" content="OpsCare - Clinical Access Portal">
+  <title>OpsCare - Clinical Sign-In</title>
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="css/base.css">
@@ -20,7 +20,7 @@
         <div class="auth-logo-icon">
           <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
         </div>
-        <span class="auth-logo-text">AuraCare OS</span>
+        <span class="auth-logo-text">OpsCare</span>
       </div>
       
       <!-- Login Section -->
@@ -52,7 +52,7 @@
       <!-- Register Section -->
       <div id="register-form-section" class="hidden">
         <h3 class="auth-title">Register Clinical Profile</h3>
-        <p class="auth-subtitle">Create security keys for AuraCare access.</p>
+        <p class="auth-subtitle">Create security keys for OpsCare access.</p>
         
         <form id="register-form" novalidate>
           <div class="form-group">
@@ -105,7 +105,7 @@
       Store.init();
 
       // 2. Auth Session Check: If already signed in, go straight to dashboard
-      if (sessionStorage.getItem('auracare_active_user')) {
+      if (sessionStorage.getItem('opscare_active_user')) {
         window.location.href = 'dashboard.html';
         return;
       }
@@ -207,7 +207,7 @@
         if (hasError) return;
 
         // Check duplicates
-        const users = JSON.parse(localStorage.getItem('auracare_users')) || [];
+        const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
         if (users.some(u => u.email === email)) {
           showFieldError('err-reg-email', 'This email is already registered.');
           return;
@@ -215,9 +215,9 @@
 
         const newUser = { name, email, phone, password };
         users.push(newUser);
-        localStorage.setItem('auracare_users', JSON.stringify(users));
+        localStorage.setItem('opscare_users', JSON.stringify(users));
 
-        sessionStorage.setItem('auracare_active_user', JSON.stringify(newUser));
+        sessionStorage.setItem('opscare_active_user', JSON.stringify(newUser));
         Toasts.success('Profile created and logged in.');
 
         setTimeout(() => {
@@ -247,7 +247,7 @@
 
         if (hasError) return;
 
-        const users = JSON.parse(localStorage.getItem('auracare_users')) || [];
+        const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
         
         // Auto-seed default credentials if localDB is empty
         if (users.length === 0) {
@@ -258,13 +258,13 @@
             password: 'Password1!'
           };
           users.push(seedUser);
-          localStorage.setItem('auracare_users', JSON.stringify(users));
+          localStorage.setItem('opscare_users', JSON.stringify(users));
         }
 
         const matchUser = users.find(u => u.email === email && u.password === password);
 
         if (matchUser) {
-          sessionStorage.setItem('auracare_active_user', JSON.stringify(matchUser));
+          sessionStorage.setItem('opscare_active_user', JSON.stringify(matchUser));
           Toasts.success(`Access granted. Welcome, ${matchUser.name}`);
           setTimeout(() => {
             window.location.href = 'dashboard.html';
