@@ -5,10 +5,13 @@ AuraCare.Views.Billing = {
   currentItems: [], // Temporary storage for invoice creation
   currentStatusFilter: 'all', // Active table filter state
 
-  render: function() {
-    const viewport = document.getElementById('app-viewport');
-    
-    // Calculate finance summary numbers
+  init: function() {
+    this.updateFinancialSummary();
+    this.bindEvents();
+    this.renderInvoices();
+  },
+
+  updateFinancialSummary: function() {
     const bills = AuraCare.Store.getBilling();
     const totalInvoiced = bills.reduce((sum, b) => sum + b.amount, 0);
     const paidBills = bills.filter(b => b.status === 'paid');
@@ -17,127 +20,91 @@ AuraCare.Views.Billing = {
     const totalOutstanding = pendingBills.reduce((sum, b) => sum + b.amount, 0);
     const collectionRate = totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 0;
 
-    viewport.innerHTML = `
-      <div class="fade-in">
-        <!-- Header -->
-        <div class="flex-between" style="margin-bottom: 24px;">
-          <div>
-            <h1 style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700;">Financial Operations & Invoicing</h1>
-            <p style="color: var(--text-secondary); font-size: 0.875rem;">Manage hospital outpatient billing ledger, discharge fees, and ledger collection.</p>
-          </div>
-          <button class="btn btn-primary" id="btn-create-invoice">
-            <i data-lucide="receipt"></i> Create New Invoice
-          </button>
-        </div>
+    // Update static DOM elements
+    const valTotalEl = document.getElementById('val-total-invoiced');
+    const valCollectedEl = document.getElementById('val-collected');
+    const valOutstandingEl = document.getElementById('val-outstanding');
+    const valCountEl = document.getElementById('val-invoices-count');
+    const rateEl = document.getElementById('val-collection-rate');
 
-        <!-- Financial Summary Cards (Click to Filter Table below) -->
-        <div class="grid-cols-4" style="margin-bottom: 24px;">
-          <div class="card metric-card" id="bill-card-all" style="cursor:pointer; border-color:${this.currentStatusFilter === 'all' ? 'var(--primary)' : 'var(--border-color)'}; box-shadow:${this.currentStatusFilter === 'all' ? '0 0 0 2px var(--primary-glow)' : 'var(--shadow-sm)'};" title="Reset filter (Show all invoices)">
-            <div class="metric-header">
-              <span class="metric-label">Total Invoiced Volume</span>
-              <div class="metric-icon" style="background-color: var(--primary-glow); color: var(--primary);">
-                <i data-lucide="bar-chart-3"></i>
-              </div>
-            </div>
-            <div class="metric-value" style="font-size:2rem;">${AuraCare.Utils.formatCurrency(totalInvoiced)}</div>
-            <div class="metric-footer">
-              <span>Gross financial transactions</span>
-            </div>
-          </div>
+    if (valTotalEl) valTotalEl.textContent = AuraCare.Utils.formatCurrency(totalInvoiced);
+    if (valCollectedEl) valCollectedEl.textContent = AuraCare.Utils.formatCurrency(totalCollected);
+    if (valOutstandingEl) valOutstandingEl.textContent = AuraCare.Utils.formatCurrency(totalOutstanding);
+    if (valCountEl) valCountEl.textContent = bills.length;
+    if (rateEl) rateEl.textContent = `${collectionRate}% Collection Rate`;
 
-          <div class="card metric-card" id="bill-card-paid" style="cursor:pointer; border-color:${this.currentStatusFilter === 'paid' ? 'var(--success)' : 'var(--border-color)'}; box-shadow:${this.currentStatusFilter === 'paid' ? '0 0 0 2px var(--success-glow)' : 'var(--shadow-sm)'};" title="Filter by: Paid Invoices">
-            <div class="metric-header">
-              <span class="metric-label">Revenue Collected</span>
-              <div class="metric-icon" style="background-color: var(--success-glow); color: var(--success);">
-                <i data-lucide="check-circle2"></i>
-              </div>
-            </div>
-            <div class="metric-value" style="font-size:2rem; background:linear-gradient(135deg, var(--success), #a5ffd6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${AuraCare.Utils.formatCurrency(totalCollected)}</div>
-            <div class="metric-footer">
-              <span class="text-success" style="font-weight:600;">${collectionRate}% Collection Rate</span>
-            </div>
-          </div>
+    // Apply active card highlights
+    const cardAll = document.getElementById('bill-card-all');
+    const cardPaid = document.getElementById('bill-card-paid');
+    const cardPending = document.getElementById('bill-card-pending');
+    const cardCount = document.getElementById('bill-card-count');
 
-          <div class="card metric-card" id="bill-card-pending" style="cursor:pointer; border-color:${this.currentStatusFilter === 'pending' ? 'var(--warning)' : 'var(--border-color)'}; box-shadow:${this.currentStatusFilter === 'pending' ? '0 0 0 2px var(--warning-glow)' : 'var(--shadow-sm)'};" title="Filter by: Outstanding Invoices">
-            <div class="metric-header">
-              <span class="metric-label">Outstanding Balances</span>
-              <div class="metric-icon" style="background-color: var(--warning-glow); color: var(--warning);">
-                <i data-lucide="alert-circle"></i>
-              </div>
-            </div>
-            <div class="metric-value" style="font-size:2rem; background:linear-gradient(135deg, var(--warning), #ffe7a5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${AuraCare.Utils.formatCurrency(totalOutstanding)}</div>
-            <div class="metric-footer">
-              <span>Awaiting billing settlement</span>
-            </div>
-          </div>
+    if (cardAll && cardPaid && cardPending && cardCount) {
+      // Clear borders
+      [cardAll, cardPaid, cardPending, cardCount].forEach(c => {
+        c.style.borderColor = 'var(--border-color)';
+        c.style.boxShadow = 'var(--shadow-sm)';
+      });
 
-          <div class="card metric-card" id="bill-card-count" style="cursor:pointer; border-color:${this.currentStatusFilter === 'all' ? 'var(--primary)' : 'var(--border-color)'}; box-shadow:${this.currentStatusFilter === 'all' ? '0 0 0 2px var(--primary-glow)' : 'var(--shadow-sm)'};" title="Reset filter (Show all invoices)">
-            <div class="metric-header">
-              <span class="metric-label">Billing Invoices Count</span>
-              <div class="metric-icon" style="background-color: var(--info-glow); color: var(--info);">
-                <i data-lucide="files"></i>
-              </div>
-            </div>
-            <div class="metric-value" style="font-size:2rem;">${bills.length}</div>
-            <div class="metric-footer">
-              <span>Total invoices registered</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Invoices List Table -->
-        <div class="card" style="padding:0;">
-          <div class="table-container" style="border:none; margin-top:0;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Invoice ID</th>
-                  <th>Patient Name (EMR)</th>
-                  <th>Total Amount</th>
-                  <th>Date Issued</th>
-                  <th>Payment Due Date</th>
-                  <th>Status</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="billing-table-body">
-                <!-- Dynamic rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-
-    this.bindEvents();
-    this.renderInvoices();
+      if (this.currentStatusFilter === 'all') {
+        cardAll.style.borderColor = 'var(--primary)';
+        cardAll.style.boxShadow = '0 0 0 2px var(--primary-glow)';
+        cardCount.style.borderColor = 'var(--primary)';
+        cardCount.style.boxShadow = '0 0 0 2px var(--primary-glow)';
+      } else if (this.currentStatusFilter === 'paid') {
+        cardPaid.style.borderColor = 'var(--success)';
+        cardPaid.style.boxShadow = '0 0 0 2px var(--success-glow)';
+      } else if (this.currentStatusFilter === 'pending') {
+        cardPending.style.borderColor = 'var(--warning)';
+        cardPending.style.boxShadow = '0 0 0 2px var(--warning-glow)';
+      }
+    }
   },
 
   bindEvents: function() {
-    document.getElementById('btn-create-invoice').addEventListener('click', () => {
-      this.openCreateInvoiceModal();
-    });
+    const btnCreate = document.getElementById('btn-create-invoice');
+    if (btnCreate) {
+      const newBtnCreate = btnCreate.cloneNode(true);
+      btnCreate.parentNode.replaceChild(newBtnCreate, btnCreate);
+      newBtnCreate.addEventListener('click', () => {
+        this.openCreateInvoiceModal();
+      });
+    }
 
-    // Wire Card Clicks for Table Filters
-    document.getElementById('bill-card-all').addEventListener('click', () => {
-      this.currentStatusFilter = 'all';
-      this.render();
-    });
+    // Wire Card Click Filters
+    const cardAll = document.getElementById('bill-card-all');
+    const cardPaid = document.getElementById('bill-card-paid');
+    const cardPending = document.getElementById('bill-card-pending');
+    const cardCount = document.getElementById('bill-card-count');
 
-    document.getElementById('bill-card-count').addEventListener('click', () => {
-      this.currentStatusFilter = 'all';
-      this.render();
-    });
-
-    document.getElementById('bill-card-paid').addEventListener('click', () => {
-      this.currentStatusFilter = 'paid';
-      this.render();
-    });
-
-    document.getElementById('bill-card-pending').addEventListener('click', () => {
-      this.currentStatusFilter = 'pending';
-      this.render();
-    });
+    if (cardAll) {
+      cardAll.onclick = () => {
+        this.currentStatusFilter = 'all';
+        this.updateFinancialSummary();
+        this.renderInvoices();
+      };
+    }
+    if (cardCount) {
+      cardCount.onclick = () => {
+        this.currentStatusFilter = 'all';
+        this.updateFinancialSummary();
+        this.renderInvoices();
+      };
+    }
+    if (cardPaid) {
+      cardPaid.onclick = () => {
+        this.currentStatusFilter = 'paid';
+        this.updateFinancialSummary();
+        this.renderInvoices();
+      };
+    }
+    if (cardPending) {
+      cardPending.onclick = () => {
+        this.currentStatusFilter = 'pending';
+        this.updateFinancialSummary();
+        this.renderInvoices();
+      };
+    }
 
     if (window.lucide) {
       window.lucide.createIcons();
@@ -162,7 +129,7 @@ AuraCare.Views.Billing = {
         <tr>
           <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
             <i data-lucide="receipt" style="width:36px; height:36px; margin-bottom:8px; display:block; margin:0 auto 8px auto;"></i>
-            No invoices registered.
+            No invoices registered under this status.
           </td>
         </tr>
       `;
@@ -171,54 +138,49 @@ AuraCare.Views.Billing = {
     }
 
     tableBody.innerHTML = bills.map(b => {
-      const statusBadge = b.status === 'paid' 
-        ? '<span class="badge bg-success-glow text-success">Paid</span>'
-        : '<span class="badge bg-warning-glow text-warning">Awaiting Settlement</span>';
+      let statusBadge = 'bg-warning-glow text-warning';
+      if (b.status === 'paid') statusBadge = 'bg-success-glow text-success';
+      if (b.status === 'overdue') statusBadge = 'bg-danger-glow text-danger';
+
+      const actionBtn = b.status !== 'paid' 
+        ? `<button class="btn btn-primary btn-sm flex-center btn-pay-bill" data-id="${b.id}"><i data-lucide="credit-card" style="width:12px;height:12px;"></i> Process Payment</button>`
+        : `<button class="btn btn-secondary btn-sm flex-center btn-view-receipt" data-id="${b.id}"><i data-lucide="printer" style="width:12px;height:12px;"></i> View Receipt</button>`;
 
       return `
         <tr>
-          <td><span style="font-family:monospace;font-weight:600;font-size:0.8rem;background-color:hsla(224, 60%, 6%, 0.4);padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);">${b.id}</span></td>
+          <td class="nowrap"><span style="font-family:monospace;font-weight:600;font-size:0.8rem;background-color:var(--bg-app);padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);">${b.id}</span></td>
           <td>
             <div style="font-weight:600;">${b.patientName}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">ID: ${b.patientId}</div>
           </td>
-          <td><strong style="color:var(--text-primary);">${AuraCare.Utils.formatCurrency(b.amount)}</strong></td>
-          <td>${AuraCare.Utils.formatDate(b.date)}</td>
-          <td>${AuraCare.Utils.formatDate(b.dueDate)}</td>
-          <td>${statusBadge}</td>
+          <td><strong>${AuraCare.Utils.formatCurrency(b.amount)}</strong></td>
+          <td>${b.date}</td>
+          <td>${b.dueDate}</td>
+          <td><span class="badge ${statusBadge}">${b.status.toUpperCase()}</span></td>
           <td style="text-align:right;">
-            <div style="display:flex; gap:8px; justify-content:flex-end;">
-              <button class="btn btn-secondary btn-sm flex-center btn-view-invoice" data-id="${b.id}">
-                <i data-lucide="eye" style="width:12px;height:12px;"></i> View Receipt
-              </button>
-              ${b.status !== 'paid' ? `
-                <button class="btn btn-success btn-sm flex-center btn-pay-invoice" data-id="${b.id}">
-                  <i data-lucide="dollar-sign" style="width:12px;height:12px;"></i> Process Payment
-                </button>
-              ` : ''}
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              ${actionBtn}
             </div>
           </td>
         </tr>
       `;
     }).join('');
 
-    // Bind action events
-    tableBody.querySelectorAll('.btn-view-invoice').forEach(btn => {
+    tableBody.querySelectorAll('.btn-pay-bill').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        this.openInvoiceDetailsModal(id);
+        if (confirm(`Authorize financial settlement for Invoice ${id}?`)) {
+          AuraCare.Store.payInvoice(id);
+          AuraCare.Toasts.success('Payment successfully processed.');
+          this.init(); // Refresh summaries & list
+        }
       });
     });
 
-    tableBody.querySelectorAll('.btn-pay-invoice').forEach(btn => {
+    tableBody.querySelectorAll('.btn-view-receipt').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        const bill = bills.find(b => b.id === id);
-        if (confirm(`Accept payment of ${AuraCare.Utils.formatCurrency(bill.amount)} for invoice ${id}?`)) {
-          AuraCare.Store.payInvoice(id);
-          AuraCare.Toasts.success(`Invoice ${id} marked paid. Revenue updated.`);
-          this.render();
-        }
+        this.openReceiptModal(id);
       });
     });
 
@@ -227,207 +189,75 @@ AuraCare.Views.Billing = {
     }
   },
 
-  openInvoiceDetailsModal: function(invoiceId) {
-    const bills = AuraCare.Store.getBilling();
-    const b = bills.find(bill => bill.id === invoiceId);
-    if (!b) return;
-
-    const itemsHtml = b.items.map(item => `
-      <tr style="border-bottom:1px solid var(--border-color);">
-        <td style="padding:10px 0; color:var(--text-primary); font-size:0.875rem;">${item.description}</td>
-        <td style="padding:10px 0; text-align:right; font-weight:600; color:var(--text-primary); font-size:0.875rem;">${AuraCare.Utils.formatCurrency(item.cost)}</td>
-      </tr>
-    `).join('');
-
-    const modalBody = `
-      <div style="padding: 8px 0; font-family:var(--font-body);">
-        <div class="flex-between" style="border-bottom: 2px dashed var(--border-color); padding-bottom:16px; margin-bottom:16px;">
-          <div>
-            <h4 style="font-family:var(--font-heading); font-size:1.5rem; font-weight:700;">AuraCare Hospital OS</h4>
-            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Institutional Billing Receipt</p>
-          </div>
-          <div style="text-align:right;">
-            <span style="font-family:monospace; font-weight:700; background-color:var(--bg-app); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px;">${b.id}</span>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Date: ${b.date}</div>
-          </div>
-        </div>
-
-        <div class="grid-cols-2" style="grid-template-columns: 1fr 1fr; margin-bottom:16px; gap:16px;">
-          <div>
-            <span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:600; display:block;">Bill To Patient:</span>
-            <strong style="color:var(--text-primary); font-size:0.95rem; margin-top:2px; display:block;">${b.patientName}</strong>
-            <span style="font-size:0.75rem; color:var(--text-secondary);">EMR Account: ${b.patientId}</span>
-          </div>
-          <div style="text-align:right;">
-            <span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:600; display:block;">Payment Status:</span>
-            <span class="badge ${b.status === 'paid' ? 'bg-success-glow text-success' : 'bg-warning-glow text-warning'}" style="margin-top:4px;">
-              ${b.status.toUpperCase()}
-            </span>
-          </div>
-        </div>
-
-        <!-- Ledger Items Table -->
-        <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
-          <thead>
-            <tr style="border-bottom:1px solid var(--text-muted);">
-              <th style="padding:8px 0; text-align:left; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">Service Description</th>
-              <th style="padding:8px 0; text-align:right; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">Cost Charges</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
-
-        <!-- Totals Row -->
-        <div class="flex-between" style="border-top:2px solid var(--border-color); padding-top:12px; margin-top:12px;">
-          <strong style="color:var(--text-primary); font-size:1rem;">Total Settlement Charges:</strong>
-          <span style="font-size:1.35rem; font-weight:700; color:var(--primary); font-family:var(--font-heading);">${AuraCare.Utils.formatCurrency(b.amount)}</span>
-        </div>
-      </div>
-    `;
-
-    const buttons = [
-      {
-        text: 'Close',
-        className: 'btn-secondary',
-        onClick: () => AuraCare.Modal.close()
-      }
-    ];
-
-    if (b.status !== 'paid') {
-      buttons.push({
-        text: '<i data-lucide="check-circle2"></i> Mark As Settled',
-        className: 'btn-primary',
-        onClick: () => {
-          AuraCare.Store.payInvoice(b.id);
-          AuraCare.Toasts.success(`Invoice ${b.id} paid.`);
-          AuraCare.Modal.close();
-          this.render();
-        }
-      });
-    }
-
-    AuraCare.Modal.open('Receipt Ledger Breakdown', modalBody, buttons);
-  },
-
   openCreateInvoiceModal: function() {
-    const patients = AuraCare.Store.getPatients().filter(p => !p.dischargeDate);
+    const patients = AuraCare.Store.getPatients().filter(p => !p.dischargeDate && p.billingStatus === 'unbilled');
     const uniqueId = AuraCare.Utils.generateId('INV', AuraCare.Store.getBilling());
-    
-    // Clear list
-    this.currentItems = [];
+
+    if (patients.length === 0) {
+      AuraCare.Modal.open('Create Invoice', `
+        <div style="text-align:center; padding:16px; color:var(--text-muted); font-size:0.85rem;">
+          <i data-lucide="check" style="width:32px; height:32px; margin-bottom:8px; color:var(--success); display:block; margin:0 auto 8px auto;"></i>
+          <p>No active unbilled patients waiting in the directory.</p>
+        </div>
+      `, [
+        {
+          text: 'Close',
+          className: 'btn-secondary',
+          onClick: () => AuraCare.Modal.close()
+        }
+      ]);
+      return;
+    }
 
     const patientOptions = patients.map(p => `<option value="${p.id}|${p.name}">${p.name} (${p.id})</option>`).join('');
 
-    const modalBody = document.createElement('div');
-    modalBody.innerHTML = `
+    const modalBody = `
       <form id="create-invoice-form" class="form-grid">
         <div class="form-group">
           <label class="form-label" for="inv-id">Invoice ID</label>
           <input type="text" id="inv-id" class="form-control" value="${uniqueId}" readonly>
         </div>
         <div class="form-group">
-          <label class="form-label" for="inv-patient">Billing Patient</label>
+          <label class="form-label" for="inv-patient">Awaiting Patient Profile</label>
           <select id="inv-patient" class="form-control" required>
-            <option value="">-- Choose Patient --</option>
+            <option value="">-- Select Patient Profile --</option>
             ${patientOptions}
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="inv-date">Billing Date</label>
-          <input type="date" id="inv-date" class="form-control" value="${new Date().toISOString().substring(0,10)}" required>
+          <label class="form-label" for="inv-dueDate">Payment Due Date</label>
+          <input type="date" id="inv-dueDate" class="form-control" required>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="inv-duedate">Due Date</label>
-          <input type="date" id="inv-duedate" class="form-control" required>
+        
+        <div class="form-group full-width" style="border-top:1px solid var(--border-color); padding-top:12px; margin-bottom: 0;">
+          <label class="form-label">Ledger Bill Items</label>
+          <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="inv-item-desc" class="form-control" style="flex:2;" placeholder="Routine ICU Bed Charges...">
+            <input type="number" id="inv-item-cost" class="form-control" style="flex:1;" placeholder="Amount ($)...">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-add-inv-item"><i data-lucide="plus"></i> Add Item</button>
+          </div>
+          <table class="data-table" style="font-size:0.75rem;">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align:right;">Cost</th>
+                <th style="text-align:right; width:40px;">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-items-tbody">
+              <tr>
+                <td colspan="3" style="text-align:center; color:var(--text-muted); font-style:italic;">No billing items added yet.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="text-align:right; font-weight:700; margin-top:8px; font-size:0.85rem;" id="invoice-items-total">Total Bill: $0.00</div>
         </div>
       </form>
-
-      <!-- Dynamic Item Builder Section -->
-      <div class="card" style="margin-top:20px; padding:16px; background-color:hsla(224, 60%, 6%, 0.2);">
-        <div class="card-title" style="font-size:0.9rem; margin-bottom:12px;"><i data-lucide="plus-circle" style="width:16px;color:var(--primary);"></i> Add Service Charge Line-Items</div>
-        
-        <div style="display:flex; gap:12px; margin-bottom:12px;">
-          <input type="text" id="item-desc" class="form-control" style="font-size:0.8125rem;" placeholder="E.g., Consultation, General Ward stay (2 days)...">
-          <input type="number" id="item-cost" class="form-control" style="font-size:0.8125rem; width:120px;" placeholder="Cost ($)">
-          <button class="btn btn-secondary btn-sm" id="btn-add-item-row" style="font-size:0.75rem;"><i data-lucide="plus" style="width:12px;"></i> Add</button>
-        </div>
-
-        <table style="width:100%; border-collapse:collapse; margin-top:8px;" id="temp-items-table">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border-color); text-align:left; font-size:0.75rem; text-transform:uppercase; color:var(--text-secondary);">
-              <th style="padding:6px 0;">Description</th>
-              <th style="padding:6px 0; text-align:right; width:100px;">Price</th>
-              <th style="padding:6px 0; text-align:right; width:50px;">Remove</th>
-            </tr>
-          </thead>
-          <tbody id="temp-items-body">
-            <!-- Rows dynamically added -->
-            <tr>
-              <td colspan="3" style="text-align:center; padding:16px; font-size:0.8125rem; color:var(--text-muted);">No items added yet.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="flex-between" style="border-top:1px solid var(--border-color); padding-top:12px; margin-top:12px; font-weight:700; font-size:0.9rem;">
-          <span>Subtotal Charges:</span>
-          <span id="temp-invoice-subtotal">$0.00</span>
-        </div>
-      </div>
     `;
 
-    const updateTempTable = () => {
-      const tbody = modalBody.querySelector('#temp-items-body');
-      const subtotalEl = modalBody.querySelector('#temp-invoice-subtotal');
-      
-      if (this.currentItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:16px; font-size:0.8125rem; color:var(--text-muted);">No items added yet.</td></tr>`;
-        subtotalEl.textContent = '$0.00';
-        return;
-      }
+    this.currentItems = [];
 
-      tbody.innerHTML = this.currentItems.map((item, idx) => `
-        <tr style="border-bottom:1px solid var(--border-color);">
-          <td style="padding:8px 0; font-size:0.8125rem; color:var(--text-primary);">${item.description}</td>
-          <td style="padding:8px 0; font-size:0.8125rem; text-align:right; font-weight:600; color:var(--text-primary);">${AuraCare.Utils.formatCurrency(item.cost)}</td>
-          <td style="padding:8px 0; text-align:right;"><button type="button" class="btn-remove-temp-row" data-index="${idx}" style="color:var(--danger); cursor:pointer; font-weight:700;">×</button></td>
-        </tr>
-      `).join('');
-
-      const total = this.currentItems.reduce((sum, item) => sum + item.cost, 0);
-      subtotalEl.textContent = AuraCare.Utils.formatCurrency(total);
-
-      // Bind deletes
-      tbody.querySelectorAll('.btn-remove-temp-row').forEach(delBtn => {
-        delBtn.addEventListener('click', () => {
-          const idx = parseInt(delBtn.getAttribute('data-index'), 10);
-          this.currentItems.splice(idx, 1);
-          updateTempTable();
-        });
-      });
-    };
-
-    // Add item click listener
-    modalBody.querySelector('#btn-add-item-row').addEventListener('click', (e) => {
-      e.preventDefault();
-      const descInput = modalBody.querySelector('#item-desc');
-      const costInput = modalBody.querySelector('#item-cost');
-
-      const description = descInput.value.trim();
-      const cost = parseFloat(costInput.value);
-
-      if (description && !isNaN(cost) && cost > 0) {
-        this.currentItems.push({ description, cost });
-        updateTempTable();
-        descInput.value = '';
-        costInput.value = '';
-      } else {
-        AuraCare.Toasts.warning('Enter valid description and positive numerical price.');
-      }
-    });
-
-    AuraCare.Modal.open('Generate Bill Invoice', modalBody, [
+    AuraCare.Modal.open('Create New Invoice', modalBody, [
       {
         text: 'Cancel',
         className: 'btn-secondary',
@@ -437,35 +267,159 @@ AuraCare.Views.Billing = {
         text: '<i data-lucide="check"></i> Finalize Invoice',
         className: 'btn-primary',
         onClick: () => {
-          const form = modalBody.querySelector('#create-invoice-form');
+          const form = document.getElementById('create-invoice-form');
           if (form.reportValidity()) {
             if (this.currentItems.length === 0) {
-              AuraCare.Toasts.warning('Please add at least one billable item line to create invoice.');
+              alert('Please add at least one ledger billing item before finalization.');
               return;
             }
 
-            const patVal = document.getElementById('inv-patient').value.split('|');
-            const date = document.getElementById('inv-date').value;
-            const dueDate = document.getElementById('inv-duedate').value;
-            const totalCost = this.currentItems.reduce((sum, item) => sum + item.cost, 0);
+            const patVal = document.getElementById('inv-patient').value;
+            const [patId, patName] = patVal.split('|');
+            const dueDate = document.getElementById('inv-dueDate').value;
+            const totalAmount = this.currentItems.reduce((sum, item) => sum + item.cost, 0);
 
             const newInvoice = {
               id: uniqueId,
-              patientId: patVal[0],
-              patientName: patVal[1],
-              date,
+              patientId: patId,
+              patientName: patName,
+              amount: totalAmount,
+              date: new Date().toISOString().substring(0, 10),
               dueDate,
-              amount: totalCost,
-              items: [...this.currentItems],
-              status: 'pending'
+              status: 'pending',
+              items: this.currentItems
             };
 
             AuraCare.Store.addInvoice(newInvoice);
-            AuraCare.Toasts.success(`Invoice created for ${patVal[1]}`);
+            AuraCare.Toasts.success(`Invoice ${uniqueId} generated successfully.`);
             AuraCare.Modal.close();
-            this.render();
+            this.init(); // RefreshSummaries & list
           }
         }
+      }
+    ]);
+
+    // Bind inside add-item triggers
+    const addBtn = document.getElementById('btn-add-inv-item');
+    const descInput = document.getElementById('inv-item-desc');
+    const costInput = document.getElementById('inv-item-cost');
+    const itemsTbody = document.getElementById('invoice-items-tbody');
+    const totalEl = document.getElementById('invoice-items-total');
+
+    if (addBtn) {
+      addBtn.onclick = () => {
+        const desc = descInput.value.trim();
+        const cost = parseFloat(costInput.value);
+
+        if (desc && !isNaN(cost) && cost > 0) {
+          this.currentItems.push({ desc, cost });
+          
+          // Re-render items
+          itemsTbody.innerHTML = this.currentItems.map((item, idx) => `
+            <tr>
+              <td>${item.desc}</td>
+              <td style="text-align:right;">${AuraCare.Utils.formatCurrency(item.cost)}</td>
+              <td style="text-align:right;"><button type="button" class="btn-del-item" data-idx="${idx}" style="color:var(--danger); cursor:pointer; background:none; border:none; font-weight:700;">×</button></td>
+            </tr>
+          `).join('');
+
+          // Update total
+          const sum = this.currentItems.reduce((s, i) => s + i.cost, 0);
+          totalEl.textContent = `Total Bill: ${AuraCare.Utils.formatCurrency(sum)}`;
+
+          // Clear inputs
+          descInput.value = '';
+          costInput.value = '';
+
+          // Bind inside item delete clicks
+          itemsTbody.querySelectorAll('.btn-del-item').forEach(btn => {
+            btn.onclick = () => {
+              const idx = parseInt(btn.getAttribute('data-idx'), 10);
+              this.currentItems.splice(idx, 1);
+              
+              if (this.currentItems.length === 0) {
+                itemsTbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); font-style:italic;">No billing items added yet.</td></tr>`;
+                totalEl.textContent = `Total Bill: $0.00`;
+              } else {
+                btn.click(); // Re-trigger mapping
+              }
+            };
+          });
+        }
+      };
+    }
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  },
+
+  openReceiptModal: function(invoiceId) {
+    const bills = AuraCare.Store.getBilling();
+    const bill = bills.find(b => b.id === invoiceId);
+    if (!bill) return;
+
+    const itemsHtml = (bill.items || []).map(item => `
+      <div class="flex-between" style="font-size:0.8rem; border-bottom:1px dashed var(--border-color); padding:4px 0;">
+        <span>${item.desc}</span>
+        <span style="font-family:monospace;">${AuraCare.Utils.formatCurrency(item.cost)}</span>
+      </div>
+    `).join('');
+
+    const modalBody = `
+      <div style="font-family:var(--font-body); padding:8px 0;">
+        <div style="text-align:center; border-bottom:2px solid var(--border-color); padding-bottom:16px; margin-bottom:16px;">
+          <h4 style="font-size:1.15rem; font-weight:700; color:var(--text-primary);">AuraCare General Hospital</h4>
+          <span style="font-size:0.75rem; color:var(--text-secondary);">100 Operations Blvd, Sector 4 &bull; Billing Receipt</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.785rem; margin-bottom:16px;">
+          <div>
+            <span style="color:var(--text-secondary); display:block;">PATIENT NAME:</span>
+            <strong>${bill.patientName} (ID: ${bill.patientId})</strong>
+          </div>
+          <div style="text-align:right;">
+            <span style="color:var(--text-secondary); display:block;">INVOICE REFERENCE:</span>
+            <strong>${bill.id}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-secondary); display:block;">DATE ISSUED:</span>
+            <span>${bill.date}</span>
+          </div>
+          <div style="text-align:right;">
+            <span style="color:var(--text-secondary); display:block;">SETTLEMENT DATE:</span>
+            <span>${new Date().toISOString().substring(0, 10)}</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding:12px; background-color:var(--bg-app); margin-bottom:16px;">
+          <span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary); display:block; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">Billing Breakdown</span>
+          ${itemsHtml}
+          <div class="flex-between" style="font-size:0.95rem; font-weight:700; margin-top:12px; border-top:1px solid var(--border-color); padding-top:8px;">
+            <span>Grand Total Settled:</span>
+            <span style="color:var(--success); font-family:monospace;">${AuraCare.Utils.formatCurrency(bill.amount)}</span>
+          </div>
+        </div>
+
+        <div style="text-align:center; color:var(--text-muted); font-size:0.7rem; margin-top:20px; border-top:1px dashed var(--border-color); padding-top:12px;">
+          <p><i data-lucide="shield-check" style="width:12px; vertical-align:middle; color:var(--success); margin-right:4px;"></i> Transaction officially finalized under ledger ID: ${bill.id}.</p>
+          <p style="margin-top:2px;">AuraCare OS Financial Security Protocol Secured.</p>
+        </div>
+      </div>
+    `;
+
+    AuraCare.Modal.open('Billing Receipt', modalBody, [
+      {
+        text: 'Print Receipt',
+        className: 'btn-primary',
+        onClick: () => {
+          window.print();
+        }
+      },
+      {
+        text: 'Close',
+        className: 'btn-secondary',
+        onClick: () => AuraCare.Modal.close()
       }
     ]);
   }

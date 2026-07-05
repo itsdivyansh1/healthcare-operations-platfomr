@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AuraCare OS - Bed Map and Supplies">
+  <title>AuraCare OS - Facility Bed & Supplies Map</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- App Main Command Shell -->
+  <div class="app-container" id="app-container">
+    
+    <!-- Left Navigation Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
+        </div>
+        <div>
+          <span class="logo-text">AuraCare OS</span>
+        </div>
+        <span class="logo-version">v1.8</span>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Clinical Operations</div>
+        <a href="dashboard.html" class="nav-item">
+          <i data-lucide="layout-grid"></i>
+          <span>Operations Center</span>
+        </a>
+        <a href="patients.html" class="nav-item">
+          <i data-lucide="heart"></i>
+          <span>Patients (EHR)</span>
+        </a>
+        <a href="resources.html" class="nav-item active">
+          <i data-lucide="layout"></i>
+          <span>Beds & Supply Map</span>
+        </a>
+
+        <div class="nav-section-title">Administration</div>
+        <a href="staff.html" class="nav-item">
+          <i data-lucide="users"></i>
+          <span>Staff Shift Roster</span>
+        </a>
+        <a href="appointments.html" class="nav-item">
+          <i data-lucide="calendar"></i>
+          <span>Consults Planner</span>
+        </a>
+        <a href="billing.html" class="nav-item">
+          <i data-lucide="credit-card"></i>
+          <span>Billing Operations</span>
+        </a>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="user-avatar" id="sidebar-avatar">DR</div>
+        <div class="user-info" style="flex:1;">
+          <span class="user-name" id="sidebar-user-name">Dr. Daniel Ross</span>
+          <span class="user-role">Clinical Staff</span>
+        </div>
+        <button class="header-btn" id="btn-logout" title="Secure Exit" style="width:28px; height:28px; background:none; border:none; color:var(--text-secondary); cursor:pointer;">
+          <i data-lucide="log-out" style="width:14px; height:14px;"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- App Content Layout Column -->
+    <main class="app-main">
+      <header class="app-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="menu-toggle" class="menu-toggle header-btn" title="Toggle Sidebar">
+            <i data-lucide="menu"></i>
+          </button>
+          <span style="font-family: var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--text-secondary);">Operations Console</span>
+        </div>
+
+        <div class="header-right">
+          <div class="header-search">
+            <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px;"></i>
+            <input type="text" id="global-search-input" placeholder="Search patient name, EMR ID..." disabled>
+          </div>
+          <button class="header-btn" id="btn-alerts-toggle" title="Active Operations Log">
+            <i data-lucide="bell" style="width:14px; height:14px;"></i>
+            <span class="btn-badge">Live</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="clinical-workspace">
+        
+        <!-- Center Panel Viewport -->
+        <div class="workspace-center" id="app-viewport">
+          <div class="fade-in">
+            <!-- Header -->
+            <div style="margin-bottom: 24px;">
+              <h1 style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700;">Wards Bed Map & Medical Inventory</h1>
+              <p style="color: var(--text-secondary); font-size: 0.875rem;">Manage ICU, ER, General Medicine bed mapping allocations, and supplies stock levels.</p>
+            </div>
+
+            <!-- Split Layout: Wards (left) + Supplies (right) -->
+            <div class="grid-cols-2" style="grid-template-columns: 2.25fr 1.75fr; align-items: start; gap: 24px;">
+              
+              <!-- Bed Grid Coordinates Card -->
+              <div class="card" style="padding: 24px;">
+                <div class="flex-between" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px;">
+                  <h3 style="font-size: 1.05rem; font-weight: 600; display:flex; align-items:center; gap:8px;"><i data-lucide="layout-grid" style="color:var(--primary); width:18px;"></i> Hospital Bed Layout Mapping</h3>
+                  <div style="display:flex; gap:10px; font-size:0.7rem; font-weight:600;">
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--success);display:inline-block;"></span> Vacant</span>
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--primary);display:inline-block;"></span> Admitted</span>
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--danger);display:inline-block;"></span> Critical</span>
+                  </div>
+                </div>
+
+                <!-- ICU Section -->
+                <div class="ward-section">
+                  <div class="ward-header" style="color:var(--danger);">Intensive Care Unit (ICU)</div>
+                  <div class="bed-grid" id="ward-grid-icu"></div>
+                </div>
+
+                <!-- Emergency Section -->
+                <div class="ward-section">
+                  <div class="ward-header" style="color:var(--warning);">Emergency Room (ER)</div>
+                  <div class="bed-grid" id="ward-grid-emergency"></div>
+                </div>
+
+                <!-- General Ward Section -->
+                <div class="ward-section">
+                  <div class="ward-header" style="color:var(--success);">General Medicine Ward</div>
+                  <div class="bed-grid" id="ward-grid-gw"></div>
+                </div>
+
+                <!-- Pediatrics Section -->
+                <div class="ward-section" style="margin-bottom: 0;">
+                  <div class="ward-header" style="color:var(--info);">Pediatrics Ward</div>
+                  <div class="bed-grid" id="ward-grid-ped"></div>
+                </div>
+              </div>
+
+              <!-- Supplies List Panel -->
+              <div class="card" style="padding: 20px; min-height: 480px; display:flex; flex-direction:column;">
+                <div class="card-title" style="margin-bottom: 16px;"><i data-lucide="boxes" style="color:var(--primary);width:16px;"></i> Medical Stock Control Console</div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:12px;" id="inventory-list-container">
+                  <!-- JS dynamically populated inventory list -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel Telemetry -->
+        <div class="workspace-right">
+          <div class="workspace-right-header">
+            <i data-lucide="activity" style="color:var(--primary); width:14px; height:14px;"></i>
+            <span>Real-time Clinical Telemetry</span>
+          </div>
+          <div class="workspace-right-content">
+            <div class="telemetry-card">
+              <div class="flex-between" style="font-size:0.7rem; font-weight:600; margin-bottom:8px;">
+                <span>Bed Allocation Capacity</span>
+              </div>
+              <div id="telemetry-beds-gauge"></div>
+            </div>
+            <div class="telemetry-card" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+              <span style="font-size:0.7rem; font-weight:600; margin-bottom:6px; display:block;">Medical Stock Alarms</span>
+              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px;" id="telemetry-stock-alerts">
+                <!-- Stock Warnings -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Operations Logs Drawer -->
+  <div class="alerts-drawer-overlay" id="alerts-drawer-overlay"></div>
+  <div class="alerts-drawer" id="alerts-drawer">
+    <div class="alerts-drawer-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="shield-alert" style="color:var(--danger); width:16px; height:16px;"></i>
+        <span style="font-weight:700; font-size:0.95rem; color:var(--text-primary);">Operations Logs Stream</span>
+      </div>
+      <button class="alerts-drawer-close" id="btn-alerts-close" title="Close Panel">×</button>
+    </div>
+    <div class="alerts-drawer-body">
+      <div class="alert-feed" id="global-alerts-feed"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay"></div>
+  <div class="toasts-container"></div>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- JS modules -->
+  <script src="js/store.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/toasts.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/charts.js"></script>
+  <script src="js/views/resources.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Init Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize view
+      AuraCare.Views.Resources.init();
+
+      // Subscribe to updates to keep maps hot
+      AuraCare.Store.subscribe('all', () => {
+        AuraCare.Views.Resources.renderWards();
+        AuraCare.Views.Resources.renderInventory();
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -3,259 +3,577 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AuraCare OS - Clinical Operations Hub">
-  <title>AuraCare OS - Clinical Operations Hub</title>
+  <meta name="description" content="AuraCare OS - Premium Hospital Operations Command Console">
+  <title>AuraCare OS - Clinical Operations Console</title>
   
   <!-- CSS Stylesheets -->
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
+  
+  <!-- Modern Healthcare SaaS Styling -->
+  <style>
+    :root {
+      --bg-clinical: #ffffff;
+      --bg-clinical-subtle: #f8fafc;
+      --primary-clinical: #0284c7; /* Clinical Sky Blue */
+      --primary-clinical-glow: rgba(2, 132, 199, 0.08);
+      --indigo-clinical: #2563eb; /* Indigo Blue */
+      --text-clinical-main: #0f172a; /* Slate 900 */
+      --text-clinical-muted: #475569; /* Slate 600 */
+      --border-clinical: #e2e8f0; /* Slate 200 */
+    }
+
+    body {
+      background-color: var(--bg-clinical);
+      color: var(--text-clinical-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header-clinical {
+      border-bottom: 1px solid var(--border-clinical);
+      background-color: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-clinical {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      background-color: var(--indigo-clinical);
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-clinical {
+      max-width: 1100px;
+      margin: 60px auto 80px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--primary-clinical-glow);
+      color: var(--indigo-clinical);
+      font-size: 0.725rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 3.25rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--text-clinical-main);
+      margin: 0 0 16px 0;
+    }
+
+    .hero-title span {
+      color: var(--indigo-clinical);
+    }
+
+    .hero-subtitle {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-clinical-muted);
+      margin: 0 0 28px 0;
+      max-width: 520px;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .btn-clinical-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--indigo-clinical);
+      color: white;
+      text-decoration: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      border: 1px solid var(--indigo-clinical);
+    }
+
+    .btn-clinical-primary:hover {
+      background-color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-clinical-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: white;
+      color: var(--text-clinical-main);
+      text-decoration: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid var(--border-clinical);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-clinical-secondary:hover {
+      background-color: var(--bg-clinical-subtle);
+    }
+
+    .compliance-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.725rem;
+      color: var(--text-clinical-muted);
+      border-top: 1px solid var(--border-clinical);
+      padding-top: 16px;
+      width: 100%;
+    }
+
+    /* Interactive Tab Preview System */
+    .preview-container {
+      background-color: white;
+      border: 1px solid var(--border-clinical);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-tabs {
+      background-color: var(--bg-clinical-subtle);
+      border-bottom: 1px solid var(--border-clinical);
+      display: flex;
+      padding: 8px 12px 0 12px;
+      gap: 4px;
+    }
+
+    .preview-tab {
+      background: none;
+      border: 1px solid transparent;
+      border-bottom: none;
+      padding: 8px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-clinical-muted);
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.15s ease;
+    }
+
+    .preview-tab:hover {
+      color: var(--text-clinical-main);
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .preview-tab.active {
+      background-color: white;
+      border-color: var(--border-clinical);
+      color: var(--indigo-clinical);
+      font-weight: 700;
+    }
+
+    .preview-body {
+      padding: 20px;
+      min-height: 220px;
+    }
+
+    .preview-content {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out forwards;
+    }
+
+    .preview-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CSS Mock grids inside preview */
+    .mock-ward-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .mock-bed-cell {
+      border: 1px solid var(--border-clinical);
+      border-radius: 8px;
+      padding: 10px 4px;
+      text-align: center;
+      background-color: var(--bg-clinical-subtle);
+    }
+
+    .mock-bed-status {
+      font-size: 0.5rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .status-vacant { background-color: var(--success-glow); color: var(--success); }
+    .status-occupied { background-color: var(--primary-clinical-glow); color: var(--indigo-clinical); }
+    .status-critical { background-color: var(--danger-glow); color: var(--danger); }
+
+    .mock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.725rem;
+    }
+
+    .mock-table th {
+      text-align: left;
+      color: var(--text-clinical-muted);
+      border-bottom: 1px solid var(--border-clinical);
+      padding: 6px 8px;
+    }
+
+    .mock-table td {
+      border-bottom: 1px solid var(--border-clinical);
+      padding: 8px;
+    }
+
+    .mock-patient-card {
+      border: 1px solid var(--border-clinical);
+      border-radius: 8px;
+      padding: 12px;
+      background-color: var(--bg-clinical-subtle);
+    }
+
+    /* Workspaces Feature Section */
+    .section-features {
+      border-top: 1px solid var(--border-clinical);
+      background-color: var(--bg-clinical-subtle);
+      padding: 60px 0;
+    }
+
+    .features-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background-color: white;
+      border: 1px solid var(--border-clinical);
+      border-radius: 8px;
+      padding: 20px;
+      transition: transform 0.15s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 32px;
+      height: 32px;
+      background-color: var(--primary-clinical-glow);
+      color: var(--indigo-clinical);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .feature-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      font-size: 0.775rem;
+      color: var(--text-clinical-muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .footer-clinical {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 24px;
+      text-align: center;
+      font-size: 0.775rem;
+      color: var(--text-clinical-muted);
+      border-top: 1px solid var(--border-clinical);
+    }
+
+    @media (max-width: 900px) {
+      .hero-clinical { grid-template-columns: 1fr; margin: 40px auto; gap: 30px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-title { font-size: 2.5rem; }
+    }
+
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .cta-row { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Authentication Gateway (Clinic Login & Registration Portal) -->
-  <div class="auth-container" id="auth-container">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <div class="auth-logo-icon">
-          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
+  <!-- Top Nav Bar -->
+  <header class="header-clinical">
+    <div class="header-container">
+      <div class="brand-clinical">
+        <div class="brand-icon">
+          <i data-lucide="activity" style="width:14px; height:14px;"></i>
         </div>
-        <span class="auth-logo-text">AuraCare OS</span>
+        <span style="font-weight:700; color:var(--text-clinical-main);">AuraCare OS</span>
       </div>
-      
-      <!-- Login Section -->
-      <div id="login-form-section">
-        <h3 class="auth-title">Clinical Staff Sign-In</h3>
-        <p class="auth-subtitle">Authorized institutional access required.</p>
-        
-        <form id="login-form" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="login-email">Secure Institutional Email</label>
-            <input type="email" id="login-email" class="form-control" placeholder="d.ross@hospital.org" required>
-            <span class="error-text hidden" id="err-login-email"></span>
-          </div>
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label" for="login-password">Password</label>
-            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
-            <span class="error-text hidden" id="err-login-password"></span>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
-            <i data-lucide="log-in" style="width:14px; height:14px; margin-right:4px;"></i> Access Console
-          </button>
-        </form>
-        
-        <p class="auth-toggle-prompt">
-          New clinic member? <button type="button" class="auth-toggle-link" id="toggle-to-register">Register Account</button>
-        </p>
-      </div>
-      
-      <!-- Register Section -->
-      <div id="register-form-section" class="hidden">
-        <h3 class="auth-title">Register Clinical Profile</h3>
-        <p class="auth-subtitle">Create security keys for AuraCare access.</p>
-        
-        <form id="register-form" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="reg-name">Full Professional Name</label>
-            <input type="text" id="reg-name" class="form-control" placeholder="Dr. Karen Vance" required>
-            <span class="error-text hidden" id="err-reg-name"></span>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="reg-email">Institutional Email Address</label>
-            <input type="email" id="reg-email" class="form-control" placeholder="k.vance@hospital.org" required>
-            <span class="error-text hidden" id="err-reg-email"></span>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="reg-phone">Secure Phone / Pager Line</label>
-            <input type="tel" id="reg-phone" class="form-control" placeholder="10-digit pager line" required>
-            <span class="error-text hidden" id="err-reg-phone"></span>
-          </div>
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label" for="reg-password">Security Password</label>
-            <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
-            <span class="error-text hidden" id="err-reg-password"></span>
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
-            <i data-lucide="user-plus" style="width:14px; height:14px; margin-right:4px;"></i> Register Account
-          </button>
-        </form>
-        
-        <p class="auth-toggle-prompt">
-          Already registered? <button type="button" class="auth-toggle-link" id="toggle-to-login">Sign-In Here</button>
-        </p>
+      <div>
+        <a href="login.html" class="btn-clinical-primary" style="padding: 6px 14px; font-size: 0.775rem; box-shadow: none;">Launch Console</a>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- App Main Command Shell (Hidden until logged in) -->
-  <div class="app-container hidden" id="app-container">
-    
-    <!-- Left Navigation Sidebar -->
-    <aside class="app-sidebar" id="app-sidebar">
-      <!-- Sidebar brand logo header -->
-      <div class="sidebar-logo">
-        <div class="logo-icon">
-          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
-        </div>
-        <div>
-          <span class="logo-text">AuraCare OS</span>
-        </div>
-        <span class="logo-version">v1.8</span>
+  <!-- Hero Section -->
+  <section class="hero-clinical">
+    <div class="hero-content">
+      <div class="trust-badge">
+        <i data-lucide="shield-check" style="width:12px; height:12px;"></i>
+        <span>Clinical Operations Console</span>
       </div>
-
-      <!-- Navigation links -->
-      <nav class="sidebar-nav">
-        <!-- Group 1: Operations -->
-        <div class="nav-section-title">Clinical Operations</div>
-        <a href="#dashboard" class="nav-item active">
-          <i data-lucide="layout-grid"></i>
-          <span>Operations Center</span>
-        </a>
-        <a href="#patients" class="nav-item">
-          <i data-lucide="heart"></i>
-          <span>Patients (EHR)</span>
-        </a>
-        <a href="#resources" class="nav-item">
-          <i data-lucide="layout"></i>
-          <span>Beds & Supply Map</span>
-        </a>
-
-        <!-- Group 2: Management -->
-        <div class="nav-section-title">Administration</div>
-        <a href="#staff" class="nav-item">
-          <i data-lucide="users"></i>
-          <span>Staff Shift Roster</span>
-        </a>
-        <a href="#appointments" class="nav-item">
-          <i data-lucide="calendar"></i>
-          <span>Consults Planner</span>
-        </a>
-        <a href="#billing" class="nav-item">
-          <i data-lucide="credit-card"></i>
-          <span>Billing Operations</span>
-        </a>
-      </nav>
-
-      <!-- Simple Sidebar Footer user info & logout -->
-      <div class="sidebar-footer">
-        <div class="user-avatar" id="sidebar-avatar">DR</div>
-        <div class="user-info" style="flex:1;">
-          <span class="user-name" id="sidebar-user-name">Dr. Daniel Ross</span>
-          <span class="user-role">Clinical Staff</span>
-        </div>
-        <button class="header-btn" id="btn-logout" title="Secure Exit" style="width:28px; height:28px; background:none; border:none; color:var(--text-secondary); cursor:pointer;">
-          <i data-lucide="log-out" style="width:14px; height:14px;"></i>
-        </button>
-      </div>
-    </aside>
-
-    <!-- App Content Layout Column -->
-    <main class="app-main">
+      <h1 class="hero-title">Hospital operations,<br><span>simplified.</span></h1>
+      <p class="hero-subtitle">Coordinate patient admissions, manage duty rosters, allocate beds, and track outpatient invoicing ledger profiles in one clean clinical workspace.</p>
       
-      <!-- Top header bar -->
-      <header class="app-header">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <!-- Mobile Menu trigger -->
-          <button id="menu-toggle" class="menu-toggle header-btn" title="Toggle Sidebar">
-            <i data-lucide="menu"></i>
-          </button>
-          
-          <span style="font-family: var(--font-heading); font-size:1.05rem; font-weight:700; color:var(--text-secondary);">Operations Console</span>
+      <div class="cta-row">
+        <a href="login.html" class="btn-clinical-primary">
+          <span>Launch Command Console</span>
+          <i data-lucide="arrow-right" style="width:14px; height:14px;"></i>
+        </a>
+        <a href="login.html" class="btn-clinical-secondary">Portal Sign-In</a>
+      </div>
+
+      <div class="compliance-text">
+        <div style="display:flex; align-items:center; gap:4px; font-weight:700;">
+          <i data-lucide="lock" style="width:12px; height:12px; color:var(--indigo-clinical);"></i>
+          <span>HIPAA COMPLIANT</span>
         </div>
+        <div>&bull;</div>
+        <div>SSL Secured</div>
+        <div>&bull;</div>
+        <div>99.9% Bed Mapping Uptime</div>
+      </div>
+    </div>
 
-        <!-- Global Action controls -->
-        <div class="header-right">
-          <!-- Global Search box -->
-          <div class="header-search">
-            <i data-lucide="search" style="color:var(--text-muted); width:14px; height:14px;"></i>
-            <input type="text" id="global-search-input" placeholder="Search patient name, EMR ID...">
-          </div>
-
-          <!-- System log notifications indicator (Toggles Slide-out Operations drawer) -->
-          <button class="header-btn" id="btn-alerts-toggle" title="Active Operations Log">
-            <i data-lucide="bell" style="width:14px; height:14px;"></i>
-            <span class="btn-badge">Live</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Two Column Layout: Workspace Viewport + Telemetry -->
-      <div class="clinical-workspace">
-        
-        <!-- Center Panel: Viewport -->
-        <div class="workspace-center" id="app-viewport">
-          <!-- Rendered views injected here -->
-        </div>
-
-        <!-- Right Panel: Telemetry Monitor -->
-        <div class="workspace-right">
-          <div class="workspace-right-header">
-            <i data-lucide="activity" style="color:var(--primary); width:14px; height:14px;"></i>
-            <span>Real-time Clinical Telemetry</span>
-          </div>
-          
-          <div class="workspace-right-content">
-            <!-- Resource gauge -->
-            <div class="telemetry-card">
-              <div class="flex-between" style="font-size:0.7rem; font-weight:600; margin-bottom:8px;">
-                <span>Bed Allocation Capacity</span>
-              </div>
-              <div id="telemetry-beds-gauge"></div>
+    <!-- Right Side Interactive Tab Preview Component -->
+    <div class="preview-container">
+      <div class="preview-tabs">
+        <button class="preview-tab active" data-tab="ward">Ward Map</button>
+        <button class="preview-tab" data-tab="staff">Roster Shift</button>
+        <button class="preview-tab" data-tab="emr">EMR Profile</button>
+      </div>
+      
+      <div class="preview-body">
+        <!-- Tab 1: Ward map grid preview -->
+        <div class="preview-content active" id="content-ward">
+          <div class="mock-ward-grid">
+            <div class="mock-bed-cell">
+              <div style="font-size:0.65rem; font-weight:700;">ICU-01</div>
+              <span class="mock-bed-status status-critical">Critical</span>
             </div>
+            <div class="mock-bed-cell">
+              <div style="font-size:0.65rem; font-weight:700;">ICU-02</div>
+              <span class="mock-bed-status status-occupied">Occupied</span>
+            </div>
+            <div class="mock-bed-cell">
+              <div style="font-size:0.65rem; font-weight:700;">ICU-03</div>
+              <span class="mock-bed-status status-vacant">Vacant</span>
+            </div>
+            <div class="mock-bed-cell">
+              <div style="font-size:0.65rem; font-weight:700;">ICU-04</div>
+              <span class="mock-bed-status status-occupied">Occupied</span>
+            </div>
+          </div>
+          <div style="margin-top:14px; font-size:0.7rem; color:var(--text-clinical-muted); display:flex; justify-content:space-between;">
+            <span>ICU Occupancy: <strong>75%</strong></span>
+            <span>Beds available: <strong>1</strong></span>
+          </div>
+        </div>
 
-            <!-- Supply Alerts -->
-            <div class="telemetry-card" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-              <span style="font-size:0.7rem; font-weight:600; margin-bottom:6px; display:block;">Medical Stock Alarms</span>
-              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px;" id="telemetry-stock-alerts">
-                <!-- Low stock warnings rendered reactively -->
+        <!-- Tab 2: Roster table preview -->
+        <div class="preview-content" id="content-staff">
+          <table class="mock-table">
+            <thead>
+              <tr>
+                <th>Physician</th>
+                <th>Specialty</th>
+                <th>Duty Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Dr. Karen Vance</strong></td>
+                <td>ICU Care</td>
+                <td><span class="badge bg-primary-glow text-primary" style="font-size:0.55rem; padding:1px 4px;">ON-DUTY</span></td>
+              </tr>
+              <tr>
+                <td><strong>Dr. Daniel Ross</strong></td>
+                <td>Cardiology</td>
+                <td><span class="badge bg-primary-glow text-primary" style="font-size:0.55rem; padding:1px 4px;">ON-DUTY</span></td>
+              </tr>
+              <tr>
+                <td><strong>Nurse Sarah Jenkins</strong></td>
+                <td>Emergency</td>
+                <td><span class="badge bg-warning-glow text-warning" style="font-size:0.55rem; padding:1px 4px;">ON-CALL</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tab 3: EMR profile preview -->
+        <div class="preview-content" id="content-emr">
+          <div class="mock-patient-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <strong style="font-size:0.8rem; color:var(--text-clinical-main);">John Doe</strong>
+                <div style="font-size:0.65rem; color:var(--text-clinical-muted);">EMR ID: PAT-40892 &bull; 45y / M</div>
               </div>
+              <span class="badge bg-danger-glow text-danger" style="font-size:0.55rem; padding:1px 4px;">CRITICAL</span>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:16px; font-size:0.65rem; color:var(--text-clinical-muted); border-top:1px solid var(--border-clinical); padding-top:8px;">
+              <span>BP: <strong>145/95</strong></span>
+              <span>SpO2: <strong style="color:var(--danger)">89%</strong></span>
+              <span>Temp: <strong>98.6°F</strong></span>
             </div>
           </div>
         </div>
-
-      </div>
-    </main>
-  </div>
-
-  <!-- Global Slide-out Operations Logs Drawer -->
-  <div class="alerts-drawer-overlay" id="alerts-drawer-overlay"></div>
-  <div class="alerts-drawer" id="alerts-drawer">
-    <div class="alerts-drawer-header">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <i data-lucide="shield-alert" style="color:var(--danger); width:16px; height:16px;"></i>
-        <span style="font-weight:700; font-size:0.95rem; color:var(--text-primary);">Operations Logs Stream</span>
-      </div>
-      <button class="alerts-drawer-close" id="btn-alerts-close" title="Close Panel">×</button>
-    </div>
-    <div class="alerts-drawer-body">
-      <div class="alert-feed" id="global-alerts-feed">
-        <!-- Rendered reactively -->
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Reusable dynamic modals overlay placeholder -->
-  <div class="modal-overlay"></div>
+  <!-- Workspaces feature highlights -->
+  <section class="section-features">
+    <div class="features-container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="layout-grid" style="width:16px; height:16px;"></i>
+          </div>
+          <h3 class="feature-name">Operations Center</h3>
+          <p class="feature-desc">Monitor live throughput counts, render trends charts, and broadcast critical updates.</p>
+        </div>
 
-  <!-- Dynamic system notifications toasts parent -->
-  <div class="toasts-container"></div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="heart" style="width:16px; height:16px;"></i>
+          </div>
+          <h3 class="feature-name">Patients Directory</h3>
+          <p class="feature-desc">Check active EMR histories, log clinical vitals, and prescribe active medications.</p>
+        </div>
 
-  <!-- Lucide Vector Icons Library CDN -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="layout" style="width:16px; height:16px;"></i>
+          </div>
+          <h3 class="feature-name">Bed & Supply Map</h3>
+          <p class="feature-desc">Coordinate ICU, ER, General Medicine, and Pediatrics bed maps. Track medical inventory counts.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i data-lucide="credit-card" style="width:16px; height:16px;"></i>
+          </div>
+          <h3 class="feature-name">Invoicing Ledger</h3>
+          <p class="feature-desc">Adjust billing ledger items, process secure payments, and print transaction receipts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer-clinical">
+    <p>&copy; 2026 AuraCare Systems Inc. Clinical operations command console. All rights reserved.</p>
+  </footer>
+
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Interactive Preview Tabs switching logic
+      const tabs = document.querySelectorAll('.preview-tab');
+      const contents = document.querySelectorAll('.preview-content');
 
-  <!-- Javascript Modules (Script Chain) -->
-  <script src="js/store.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/components/toasts.js"></script>
-  <script src="js/components/modal.js"></script>
-  <script src="js/components/charts.js"></script>
-  <script src="js/views/dashboard.js"></script>
-  <script src="js/views/patients.js"></script>
-  <script src="js/views/staff.js"></script>
-  <script src="js/views/resources.js"></script>
-  <script src="js/views/appointments.js"></script>
-  <script src="js/views/billing.js"></script>
-  <script src="js/app.js"></script>
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Clear active classes
+          tabs.forEach(t => t.classList.remove('active'));
+          contents.forEach(c => c.classList.remove('active'));
+
+          // Add active classes to clicked tab
+          tab.classList.add('active');
+          const targetId = `content-${tab.getAttribute('data-tab')}`;
+          const targetContent = document.getElementById(targetId);
+          if (targetContent) {
+            targetContent.classList.add('active');
+          }
+        });
+      });
+
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
 
 </body>
 </html>

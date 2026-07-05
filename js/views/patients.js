@@ -6,109 +6,50 @@ AuraCare.Views.Patients = {
   currentSeverityFilter: 'all',
   currentWardFilter: 'all',
 
-  render: function() {
-    const viewport = document.getElementById('app-viewport');
-    
-    viewport.innerHTML = `
-      <div class="fade-in">
-        <!-- Header -->
-        <div class="flex-between" style="margin-bottom: 24px;">
-          <div>
-            <h1 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;">Electronic Health Records (EHR)</h1>
-            <p style="color: var(--text-secondary); font-size: 0.8rem;">Manage hospital admissions, patient records, and clinical logs.</p>
-          </div>
-          <button class="btn btn-primary" id="btn-admit-patient">
-            <i data-lucide="plus-circle"></i> Admit New Patient
-          </button>
-        </div>
-
-        <!-- Filter Shell Card -->
-        <div class="card" style="padding: 16px; margin-bottom: 24px;">
-          <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
-            <!-- Search -->
-            <div class="header-search" style="display:flex; width: 300px; background-color: var(--bg-app);">
-              <i data-lucide="search" style="color:var(--text-muted); width:16px; height:16px;"></i>
-              <input type="text" id="patient-search-input" placeholder="Search by name or EMR ID..." value="${this.currentSearch}">
-            </div>
-
-            <!-- Severity Filter -->
-            <div class="form-group" style="margin-bottom:0; flex-direction:row; align-items:center; gap:8px;">
-              <label class="form-label" style="white-space:nowrap; margin-bottom:0;">Severity:</label>
-              <select id="filter-severity" class="form-control" style="width:130px; padding:6px 10px;">
-                <option value="all" ${this.currentSeverityFilter === 'all' ? 'selected' : ''}>All</option>
-                <option value="critical" ${this.currentSeverityFilter === 'critical' ? 'selected' : ''}>Critical</option>
-                <option value="high" ${this.currentSeverityFilter === 'high' ? 'selected' : ''}>High</option>
-                <option value="medium" ${this.currentSeverityFilter === 'medium' ? 'selected' : ''}>Medium</option>
-                <option value="low" ${this.currentSeverityFilter === 'low' ? 'selected' : ''}>Low</option>
-              </select>
-            </div>
-
-            <!-- Ward Filter -->
-            <div class="form-group" style="margin-bottom:0; flex-direction:row; align-items:center; gap:8px;">
-              <label class="form-label" style="white-space:nowrap; margin-bottom:0;">Unit Ward:</label>
-              <select id="filter-ward" class="form-control" style="width:150px; padding:6px 10px;">
-                <option value="all" ${this.currentWardFilter === 'all' ? 'selected' : ''}>All Wards</option>
-                <option value="ICU" ${this.currentWardFilter === 'ICU' ? 'selected' : ''}>ICU</option>
-                <option value="Emergency" ${this.currentWardFilter === 'Emergency' ? 'selected' : ''}>Emergency</option>
-                <option value="General Ward" ${this.currentWardFilter === 'General Ward' ? 'selected' : ''}>General Ward</option>
-                <option value="Pediatrics" ${this.currentWardFilter === 'Pediatrics' ? 'selected' : ''}>Pediatrics</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Patients Data Table -->
-        <div class="card" style="padding:0;">
-          <div class="table-container" style="border:none; margin-top:0;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>EMR ID</th>
-                  <th>Patient Name</th>
-                  <th>Age / Sex</th>
-                  <th>Severity</th>
-                  <th>Location (Bed)</th>
-                  <th>Assigned Physician</th>
-                  <th>Status</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="patients-table-body">
-                <!-- Dynamic rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-
+  init: function() {
     this.bindEvents();
     this.renderPatientRows();
   },
 
   bindEvents: function() {
-    // 1. Admit patient button
-    document.getElementById('btn-admit-patient').addEventListener('click', () => {
-      this.openAdmissionModal();
-    });
+    const btnAdmit = document.getElementById('btn-admit-patient');
+    if (btnAdmit) {
+      const newBtnAdmit = btnAdmit.cloneNode(true);
+      btnAdmit.parentNode.replaceChild(newBtnAdmit, btnAdmit);
+      newBtnAdmit.addEventListener('click', () => {
+        this.openAdmissionModal();
+      });
+    }
 
-    // 2. Search box input with debouncing
     const searchInput = document.getElementById('patient-search-input');
-    searchInput.addEventListener('input', AuraCare.Utils.debounce((e) => {
-      this.currentSearch = e.target.value.trim();
-      this.renderPatientRows();
-    }, 150));
+    if (searchInput) {
+      const newSearchInput = searchInput.cloneNode(true);
+      searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+      newSearchInput.addEventListener('input', AuraCare.Utils.debounce((e) => {
+        this.currentSearch = e.target.value.trim();
+        this.renderPatientRows();
+      }, 150));
+    }
 
-    // 3. Filters dropdowns
-    document.getElementById('filter-severity').addEventListener('change', (e) => {
-      this.currentSeverityFilter = e.target.value;
-      this.renderPatientRows();
-    });
+    const filterSeverity = document.getElementById('filter-severity');
+    if (filterSeverity) {
+      const newFilterSeverity = filterSeverity.cloneNode(true);
+      filterSeverity.parentNode.replaceChild(newFilterSeverity, filterSeverity);
+      newFilterSeverity.addEventListener('change', (e) => {
+        this.currentSeverityFilter = e.target.value;
+        this.renderPatientRows();
+      });
+    }
 
-    document.getElementById('filter-ward').addEventListener('change', (e) => {
-      this.currentWardFilter = e.target.value;
-      this.renderPatientRows();
-    });
+    const filterWard = document.getElementById('filter-ward');
+    if (filterWard) {
+      const newFilterWard = filterWard.cloneNode(true);
+      filterWard.parentNode.replaceChild(newFilterWard, filterWard);
+      newFilterWard.addEventListener('change', (e) => {
+        this.currentWardFilter = e.target.value;
+        this.renderPatientRows();
+      });
+    }
 
     if (window.lucide) {
       window.lucide.createIcons();
@@ -158,7 +99,6 @@ AuraCare.Views.Patients = {
     }
 
     tableBody.innerHTML = patients.map(p => {
-      // SAFE FALLBACK CHECKS - Prevents "Clinical Console Render Error" from undefined properties
       const age = p.dob ? AuraCare.Utils.calculateAge(p.dob) : 'N/A';
       const genderShort = p.gender ? p.gender.substring(0, 1) : 'U';
       const severity = p.severity || 'low';
@@ -212,7 +152,7 @@ AuraCare.Views.Patients = {
         if (patient && confirm(`Are you sure you want to clinically discharge ${patient.name || 'this patient'}?`)) {
           AuraCare.Store.dischargePatient(id);
           AuraCare.Toasts.success(`Clinical discharge processed for ${patient.name}.`);
-          this.render();
+          this.renderPatientRows();
         }
       });
     });
@@ -329,7 +269,7 @@ AuraCare.Views.Patients = {
 
             AuraCare.Toasts.success(`Patient ${name} admitted successfully.`);
             AuraCare.Modal.close();
-            this.render();
+            this.renderPatientRows();
           }
         }
       }
@@ -343,7 +283,6 @@ AuraCare.Views.Patients = {
       
       const age = p.dob ? AuraCare.Utils.calculateAge(p.dob) : 'N/A';
       
-      // Safe array defaults
       const history = p.history || [];
       const medications = p.medications || [];
       const vitals = p.vitals || { bp: '120/80', hr: 75, temp: '98.6°F', spo2: 98 };
@@ -413,7 +352,7 @@ AuraCare.Views.Patients = {
           <!-- Active Medications Card -->
           <div class="card" style="padding:16px; background-color:var(--bg-app);">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:12px;"><i data-lucide="pill" style="color:var(--secondary);width:16px;"></i> Prescribed Medications</div>
-            <ul style="margin-bottom:12px; max-height:120px; overflow-y:auto; padding-right:2px;">
+            <ul style="margin-bottom:12px; max-height:120px; overflow-y:auto; padding-right:2px; list-style:none; padding-left:0;">
               ${medList}
             </ul>
             <div style="display:flex; gap:8px;">
@@ -576,6 +515,10 @@ AuraCare.Views.Patients = {
           onClick: () => AuraCare.Modal.close()
         }
       ]);
+      
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
     };
 
     drawProfile();

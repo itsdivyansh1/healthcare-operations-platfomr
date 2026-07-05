@@ -4,77 +4,37 @@ window.AuraCare.Views = window.AuraCare.Views || {};
 AuraCare.Views.Staff = {
   currentRoleFilter: 'all',
 
-  render: function() {
-    const viewport = document.getElementById('app-viewport');
-    
-    viewport.innerHTML = `
-      <div class="fade-in">
-        <!-- Header -->
-        <div class="flex-between" style="margin-bottom: 24px;">
-          <div>
-            <h1 style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700;">Clinical Staff Roster</h1>
-            <p style="color: var(--text-secondary); font-size: 0.875rem;">Monitor shift statuses, page on-duty doctors, and schedule staff.</p>
-          </div>
-          <button class="btn btn-primary" id="btn-add-staff">
-            <i data-lucide="user-plus"></i> Register Staff Member
-          </button>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="card" style="padding: 16px; margin-bottom: 24px;">
-          <div style="display:flex; gap:16px; align-items:center;">
-            <span class="form-label" style="margin-bottom:0;">Filter by Role:</span>
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn-secondary btn-sm filter-btn ${this.currentRoleFilter === 'all' ? 'btn-primary' : ''}" data-role="all">All Roles</button>
-              <button class="btn btn-secondary btn-sm filter-btn ${this.currentRoleFilter === 'Doctor' ? 'btn-primary' : ''}" data-role="Doctor">Physicians</button>
-              <button class="btn btn-secondary btn-sm filter-btn ${this.currentRoleFilter === 'Nurse' ? 'btn-primary' : ''}" data-role="Nurse">Nursing</button>
-              <button class="btn btn-secondary btn-sm filter-btn ${this.currentRoleFilter === 'Technician' ? 'btn-primary' : ''}" data-role="Technician">Lab & Tech</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Roster Data Grid -->
-        <div class="card" style="padding:0;">
-          <div class="table-container" style="border:none; margin-top:0;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Staff ID</th>
-                  <th>Full Name</th>
-                  <th>Designation</th>
-                  <th>Clinical Area / Specialty</th>
-                  <th>Shift Schedule</th>
-                  <th>Duty Status</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="staff-table-body">
-                <!-- Dynamic rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    `;
-
+  init: function() {
     this.bindEvents();
     this.renderStaffRows();
   },
 
   bindEvents: function() {
-    // 1. Add staff button
-    document.getElementById('btn-add-staff').addEventListener('click', () => {
-      this.openAddStaffModal();
-    });
-
-    // 2. Filter buttons
-    const container = document.getElementById('app-viewport');
-    container.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        this.currentRoleFilter = btn.getAttribute('data-role');
-        this.render(); // Rerender full view to redraw active state
+    const btnAddStaff = document.getElementById('btn-add-staff');
+    if (btnAddStaff) {
+      const newBtnAdd = btnAddStaff.cloneNode(true);
+      btnAddStaff.parentNode.replaceChild(newBtnAdd, btnAddStaff);
+      newBtnAdd.addEventListener('click', () => {
+        this.openAddStaffModal();
       });
-    });
+    }
+
+    const container = document.getElementById('app-viewport');
+    if (container) {
+      container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          this.currentRoleFilter = btn.getAttribute('data-role');
+          
+          // Toggle active classes manually
+          container.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('btn-primary');
+          });
+          btn.classList.add('btn-primary');
+
+          this.renderStaffRows();
+        });
+      });
+    }
 
     if (window.lucide) {
       window.lucide.createIcons();
@@ -143,7 +103,7 @@ AuraCare.Views.Staff = {
         const newStatus = e.target.value;
         AuraCare.Store.updateStaffStatus(id, newStatus);
         AuraCare.Toasts.info(`Duty status changed to: ${newStatus.toUpperCase()}`);
-        this.renderStaffRows(); // Reload rows to apply changes (and keep bindings intact)
+        this.renderStaffRows();
       });
     });
 
@@ -220,7 +180,6 @@ AuraCare.Views.Staff = {
         text: '<i data-lucide="check"></i> Register Roster',
         className: 'btn-primary',
         onClick: () => {
-          // Clear previous errors
           document.querySelectorAll('.error-text').forEach(el => {
             el.textContent = '';
             el.classList.add('hidden');
@@ -251,9 +210,9 @@ AuraCare.Views.Staff = {
             const err = document.getElementById('err-stf-phone');
             if (err) { err.textContent = 'Phone number is required.'; err.classList.remove('hidden'); }
             hasError = true;
-          } else if (!/^[0-9]{10}$/.test(phone)) {
+          } else if (!/^[6-9][0-9]{9}$/.test(phone)) {
             const err = document.getElementById('err-stf-phone');
-            if (err) { err.textContent = 'Phone number must be exactly 10 digits.'; err.classList.remove('hidden'); }
+            if (err) { err.textContent = 'Enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9.'; err.classList.remove('hidden'); }
             hasError = true;
           }
 
@@ -280,7 +239,7 @@ AuraCare.Views.Staff = {
           AuraCare.Store.addStaff(newStaff);
           AuraCare.Toasts.success(`${name} has been added to roster.`);
           AuraCare.Modal.close();
-          this.render();
+          this.renderStaffRows();
         }
       }
     ]);

@@ -2,37 +2,20 @@ window.AuraCare = window.AuraCare || {};
 window.AuraCare.Views = window.AuraCare.Views || {};
 
 AuraCare.Views.Appointments = {
-  render: function() {
-    const viewport = document.getElementById('app-viewport');
-    
-    viewport.innerHTML = `
-      <div class="fade-in">
-        <!-- Header -->
-        <div class="flex-between" style="margin-bottom: 24px;">
-          <div>
-            <h1 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;">Consultations & Surgery Schedulers</h1>
-            <p style="color: var(--text-secondary); font-size: 0.8rem;">Schedule clinic check-ups, review calendar slots, and assign physician consultants.</p>
-          </div>
-          <button class="btn btn-primary" id="btn-schedule-apt">
-            <i data-lucide="calendar-plus"></i> Book Consultation
-          </button>
-        </div>
-
-        <!-- Appointment Cards Grid -->
-        <div class="grid-cols-3" id="appointments-cards-grid">
-          <!-- Dynamic cards -->
-        </div>
-      </div>
-    `;
-
+  init: function() {
     this.bindEvents();
     this.renderAppointments();
   },
 
   bindEvents: function() {
-    document.getElementById('btn-schedule-apt').addEventListener('click', () => {
-      this.openScheduleModal();
-    });
+    const btnBook = document.getElementById('btn-book-consult');
+    if (btnBook) {
+      const newBtnBook = btnBook.cloneNode(true);
+      btnBook.parentNode.replaceChild(newBtnBook, btnBook);
+      newBtnBook.addEventListener('click', () => {
+        this.openBookConsultModal();
+      });
+    }
 
     if (window.lucide) {
       window.lucide.createIcons();
@@ -40,147 +23,109 @@ AuraCare.Views.Appointments = {
   },
 
   renderAppointments: function() {
-    const grid = document.getElementById('appointments-cards-grid');
-    if (!grid) return;
+    const tableBody = document.getElementById('appointments-table-body');
+    if (!tableBody) return;
 
-    const apts = AuraCare.Store.getAppointments().filter(a => a.status === 'scheduled');
+    const apts = AuraCare.Store.getAppointments();
 
     if (apts.length === 0) {
-      grid.className = 'card';
-      grid.style.gridTemplateColumns = '1fr';
-      grid.innerHTML = `
-        <div style="text-align:center; padding:40px; color:var(--text-muted); font-size:0.85rem;">
-          <i data-lucide="calendar" style="width:36px; height:36px; margin-bottom:12px; display:block; margin:0 auto 12px auto; color:var(--text-muted);"></i>
-          No upcoming consultations scheduled.
-        </div>
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+            <i data-lucide="calendar" style="width:36px; height:36px; margin-bottom:8px; display:block; margin:0 auto 8px auto;"></i>
+            No consultations scheduled.
+          </td>
+        </tr>
       `;
-      if (window.lucide) window.lucide.createIcons({ node: grid });
+      if (window.lucide) window.lucide.createIcons({ node: tableBody });
       return;
     }
 
-    grid.className = 'grid-cols-3';
-    grid.style.gridTemplateColumns = '';
-    grid.innerHTML = apts.map(a => {
-      // Split date to show clean clinical month / day card block
-      const dateParts = a.date.split('-');
-      let dayText = '';
-      let monthText = '';
-      if (dateParts.length === 3) {
-        const d = new Date(a.date);
-        dayText = dateParts[2];
-        monthText = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-      }
+    tableBody.innerHTML = apts.map(a => {
+      const statusBadge = a.status === 'scheduled' ? 'bg-primary-glow text-primary' : (a.status === 'completed' ? 'bg-success-glow text-success' : 'bg-danger-glow text-danger');
+      const actionButton = a.status === 'scheduled' ? `<button class="btn btn-success btn-sm flex-center btn-complete-apt" data-id="${a.id}"><i data-lucide="check" style="width:12px;height:12px;"></i> Finish</button>` : '';
 
       return `
-        <div class="apt-card-agenda">
-          <div>
-            <!-- Agenda Top Info Row -->
-            <div class="apt-agenda-badge-row">
-              <span style="font-family:monospace; font-size:0.75rem; font-weight:700; color:var(--text-muted); background-color:var(--bg-app); border:1px solid var(--border-color); padding:2px 6px; border-radius:4px;">${a.id}</span>
-              <span class="badge bg-info-glow text-info">Awaiting Slot</span>
+        <tr>
+          <td class="nowrap"><span style="font-family:monospace;font-weight:600;font-size:0.8rem;background-color:var(--bg-app);padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);">${a.id}</span></td>
+          <td>
+            <div style="font-weight:600;">${a.patientName}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">ID: ${a.patientId}</div>
+          </td>
+          <td><strong>${a.doctorName}</strong></td>
+          <td>${a.date}</td>
+          <td><span style="font-family:monospace; font-weight:600;">${a.time}</span></td>
+          <td><span class="badge ${statusBadge}">${a.status.toUpperCase()}</span></td>
+          <td style="text-align:right;">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              ${actionButton}
+              <button class="btn btn-secondary btn-sm flex-center btn-cancel-apt" data-id="${a.id}" ${a.status !== 'scheduled' ? 'disabled' : ''}><i data-lucide="x" style="width:12px;height:12px;"></i> Cancel</button>
             </div>
-
-            <!-- Date and Content split -->
-            <div style="display:flex; gap:14px; align-items:start; margin-bottom:12px;">
-              <!-- Calendar Page Block -->
-              <div style="background-color:var(--bg-app); border:1px solid var(--border-color); border-radius:var(--radius-md); text-align:center; width:52px; height:52px; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden;">
-                <div style="background-color:var(--primary); color:white; font-size:0.55rem; font-weight:700; padding:2px 0;">${monthText}</div>
-                <div style="font-family:var(--font-heading); font-size:1.15rem; font-weight:700; color:var(--text-primary); line-height:1.2; display:flex; align-items:center; justify-content:center; flex:1;">${dayText}</div>
-              </div>
-              
-              <!-- Patient Info -->
-              <div style="overflow:hidden;">
-                <h4 style="font-size:1.05rem; font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; margin-bottom:2px;">${a.patientName}</h4>
-                <div style="font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">
-                  <i data-lucide="stethoscope" style="width:12px; height:12px; color:var(--primary);"></i>
-                  <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${a.doctorName}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Reason Description Block -->
-            <p style="font-size:0.8rem; color:var(--text-secondary); background-color:var(--bg-app); border:1px solid var(--border-color); padding:10px 12px; border-radius:var(--radius-md); line-height:1.4;">
-              ${a.reason}
-            </p>
-          </div>
-
-          <!-- Bottom Schedule Details & Action Row -->
-          <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
-            <div class="apt-time-badge">
-              <i data-lucide="clock" style="width:11px; height:11px;"></i> ${a.time}
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-secondary btn-sm btn-cancel-apt" data-id="${a.id}" style="padding:4px 10px; font-size:0.65rem;">Cancel</button>
-              <button class="btn btn-success btn-sm btn-complete-apt" data-id="${a.id}" style="padding:4px 10px; font-size:0.65rem;"><i data-lucide="check" style="width:10px;height:10px;"></i> Done</button>
-            </div>
-          </div>
-        </div>
+          </td>
+        </tr>
       `;
     }).join('');
 
-    // Bind action buttons
-    grid.querySelectorAll('.btn-cancel-apt').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        AuraCare.Store.updateAppointmentStatus(id, 'cancelled');
-        AuraCare.Toasts.warning('Consultation slot cancelled.');
-        this.render();
-      });
-    });
-
-    grid.querySelectorAll('.btn-complete-apt').forEach(btn => {
+    tableBody.querySelectorAll('.btn-complete-apt').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         AuraCare.Store.updateAppointmentStatus(id, 'completed');
         AuraCare.Toasts.success('Consultation marked completed.');
-        this.render();
+        this.renderAppointments();
+      });
+    });
+
+    tableBody.querySelectorAll('.btn-cancel-apt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (confirm('Cancel this scheduled check-up?')) {
+          AuraCare.Store.updateAppointmentStatus(id, 'cancelled');
+          AuraCare.Toasts.warning('Consultation cancelled.');
+          this.renderAppointments();
+        }
       });
     });
 
     if (window.lucide) {
-      window.lucide.createIcons({ node: grid });
+      window.lucide.createIcons({ node: tableBody });
     }
   },
 
-  openScheduleModal: function() {
+  openBookConsultModal: function() {
     const patients = AuraCare.Store.getPatients().filter(p => !p.dischargeDate);
     const doctors = AuraCare.Store.getStaff().filter(s => s.role === 'Doctor' && s.status !== 'off-duty');
     const uniqueId = AuraCare.Utils.generateId('APT', AuraCare.Store.getAppointments());
 
-    const patientOptions = patients.map(p => `<option value="${p.id}|${p.name || 'Anonymous'}">${p.name || 'Anonymous'} (${p.id})</option>`).join('');
-    const doctorOptions = doctors.map(d => `<option value="${d.id}|${d.name}">${d.name} (${d.specialty})</option>`).join('');
+    const patientOptions = patients.map(p => `<option value="${p.id}|${p.name}">${p.name} (${p.id})</option>`).join('');
+    const doctorOptions = doctors.map(d => `<option value="${d.name}">${d.name} (${d.specialty})</option>`).join('');
 
     const modalBody = `
-      <form id="schedule-consultation-form" class="form-grid">
+      <form id="book-consult-form" class="form-grid">
         <div class="form-group">
-          <label class="form-label" for="apt-id">Booking ID</label>
+          <label class="form-label" for="apt-id">Consultation ID</label>
           <input type="text" id="apt-id" class="form-control" value="${uniqueId}" readonly>
         </div>
         <div class="form-group">
           <label class="form-label" for="apt-patient">Patient Profile</label>
           <select id="apt-patient" class="form-control" required>
-            <option value="">-- Choose Patient --</option>
+            <option value="">-- Select Patient --</option>
             ${patientOptions}
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="apt-doctor">Clinical Doctor</label>
+          <label class="form-label" for="apt-doctor">Specialist Physician</label>
           <select id="apt-doctor" class="form-control" required>
-            <option value="">-- Choose Physician --</option>
+            <option value="">-- Select Doctor --</option>
             ${doctorOptions}
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="apt-date">Schedule Date</label>
+          <label class="form-label" for="apt-date">Date Scheduled</label>
           <input type="date" id="apt-date" class="form-control" required>
         </div>
         <div class="form-group">
-          <label class="form-label" for="apt-time">Schedule Time</label>
+          <label class="form-label" for="apt-time">Time Slot</label>
           <input type="time" id="apt-time" class="form-control" required>
-        </div>
-        <div class="form-group full-width">
-          <label class="form-label" for="apt-reason">Consultation Clinical Reason</label>
-          <input type="text" id="apt-reason" class="form-control" placeholder="E.g., Routine cardiac follow-up..." required>
         </div>
       </form>
     `;
@@ -192,33 +137,31 @@ AuraCare.Views.Appointments = {
         onClick: () => AuraCare.Modal.close()
       },
       {
-        text: '<i data-lucide="check"></i> Confirm Booking',
+        text: '<i data-lucide="check"></i> Confirm Appointment',
         className: 'btn-primary',
         onClick: () => {
-          const form = document.getElementById('schedule-consultation-form');
+          const form = document.getElementById('book-consult-form');
           if (form.reportValidity()) {
-            const patVal = document.getElementById('apt-patient').value.split('|');
-            const docVal = document.getElementById('apt-doctor').value.split('|');
+            const patVal = document.getElementById('apt-patient').value;
+            const [patId, patName] = patVal.split('|');
+            const doctorName = document.getElementById('apt-doctor').value;
             const date = document.getElementById('apt-date').value;
             const time = document.getElementById('apt-time').value;
-            const reason = document.getElementById('apt-reason').value;
 
             const newApt = {
               id: uniqueId,
-              patientId: patVal[0],
-              patientName: patVal[1],
-              doctorId: docVal[0],
-              doctorName: docVal[1],
+              patientId: patId,
+              patientName: patName,
+              doctorName,
               date,
               time,
-              reason,
               status: 'scheduled'
             };
 
             AuraCare.Store.addAppointment(newApt);
-            AuraCare.Toasts.success('Consultation booked successfully.');
+            AuraCare.Toasts.success(`Consultation booked successfully.`);
             AuraCare.Modal.close();
-            this.render();
+            this.renderAppointments();
           }
         }
       }

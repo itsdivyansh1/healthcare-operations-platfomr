@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AuraCare OS - Clinical Access Portal">
+  <title>AuraCare OS - Clinical Sign-In</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body style="background-color: var(--bg-app);">
+
+  <!-- Authentication Gateway -->
+  <div class="auth-container" id="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <i data-lucide="activity" style="width:16px; height:16px; color:white;"></i>
+        </div>
+        <span class="auth-logo-text">AuraCare OS</span>
+      </div>
+      
+      <!-- Login Section -->
+      <div id="login-form-section">
+        <h3 class="auth-title">Clinical Staff Sign-In</h3>
+        <p class="auth-subtitle">Authorized institutional access required.</p>
+        
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Secure Institutional Email</label>
+            <input type="email" id="login-email" class="form-control" placeholder="d.ross@hospital.org" required>
+            <span class="error-text hidden" id="err-login-email"></span>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+            <span class="error-text hidden" id="err-login-password"></span>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
+            <i data-lucide="log-in" style="width:14px; height:14px; margin-right:4px;"></i> Access Console
+          </button>
+        </form>
+        
+        <p class="auth-toggle-prompt">
+          New clinic member? <button type="button" class="auth-toggle-link" id="toggle-to-register">Register Account</button>
+        </p>
+      </div>
+      
+      <!-- Register Section -->
+      <div id="register-form-section" class="hidden">
+        <h3 class="auth-title">Register Clinical Profile</h3>
+        <p class="auth-subtitle">Create security keys for AuraCare access.</p>
+        
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Professional Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="Dr. Karen Vance" required>
+            <span class="error-text hidden" id="err-reg-name"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Institutional Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="k.vance@hospital.org" required>
+            <span class="error-text hidden" id="err-reg-email"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Secure Phone / Pager Line (Indian format)</label>
+            <input type="tel" id="reg-phone" class="form-control" placeholder="10-digit number starting with 6-9" required>
+            <span class="error-text hidden" id="err-reg-phone"></span>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" for="reg-password">Security Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
+            <span class="error-text hidden" id="err-reg-password"></span>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
+            <i data-lucide="user-plus" style="width:14px; height:14px; margin-right:4px;"></i> Register Account
+          </button>
+        </form>
+        
+        <p class="auth-toggle-prompt">
+          Already registered? <button type="button" class="auth-toggle-link" id="toggle-to-login">Sign-In Here</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic system notifications toasts parent -->
+  <div class="toasts-container"></div>
+
+  <!-- Lucide Vector Icons Library CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Javascript Modules -->
+  <script src="js/store.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components/toasts.js"></script>
+  
+  <!-- Page Specific Login Controller -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Initialize DB Seed
+      AuraCare.Store.init();
+
+      // 2. Auth Session Check: If already signed in, go straight to dashboard
+      if (sessionStorage.getItem('auracare_active_user')) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const loginSection = document.getElementById('login-form-section');
+      const registerSection = document.getElementById('register-form-section');
+      const toggleToReg = document.getElementById('toggle-to-register');
+      const toggleToLogin = document.getElementById('toggle-to-login');
+
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+
+      // Form Toggles
+      toggleToReg.onclick = () => {
+        loginSection.classList.add('hidden');
+        registerSection.classList.remove('hidden');
+        clearErrors();
+        registerForm.reset();
+      };
+
+      toggleToLogin.onclick = () => {
+        registerSection.classList.add('hidden');
+        loginSection.classList.remove('hidden');
+        clearErrors();
+        loginForm.reset();
+      };
+
+      function clearErrors() {
+        document.querySelectorAll('.error-text').forEach(el => {
+          el.textContent = '';
+          el.classList.add('hidden');
+        });
+      }
+
+      function showFieldError(elementId, msg) {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.textContent = msg;
+          el.classList.remove('hidden');
+        }
+      }
+
+      // Registration Form validation & submit
+      registerForm.onsubmit = (e) => {
+        e.preventDefault();
+        clearErrors();
+
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim().toLowerCase();
+        const phone = document.getElementById('reg-phone').value.trim();
+        const password = document.getElementById('reg-password').value;
+
+        let hasError = false;
+
+        if (!name) {
+          showFieldError('err-reg-name', 'Full professional name is required.');
+          hasError = true;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+          showFieldError('err-reg-email', 'Please enter a valid email address.');
+          hasError = true;
+        }
+
+        // Indian mobile validator: Starts with 6,7,8,9 and total length exactly 10
+        if (!phone) {
+          showFieldError('err-reg-phone', 'Pager/phone line is required.');
+          hasError = true;
+        } else if (!/^[6-9][0-9]{9}$/.test(phone)) {
+          showFieldError('err-reg-phone', 'Enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9.');
+          hasError = true;
+        }
+
+        if (!password) {
+          showFieldError('err-reg-password', 'Password is required.');
+          hasError = true;
+        } else {
+          let pwError = '';
+          if (password.length < 6) {
+            pwError = 'Password must be at least 6 characters. ';
+          }
+          if (!/[A-Z]/.test(password)) {
+            pwError += 'Must contain at least 1 uppercase letter. ';
+          }
+          if (!/[0-9]/.test(password)) {
+            pwError += 'Must contain at least 1 numerical digit. ';
+          }
+          if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            pwError += 'Must contain at least 1 special character.';
+          }
+
+          if (pwError) {
+            showFieldError('err-reg-password', pwError);
+            hasError = true;
+          }
+        }
+
+        if (hasError) return;
+
+        // Check duplicates
+        const users = JSON.parse(localStorage.getItem('auracare_users')) || [];
+        if (users.some(u => u.email === email)) {
+          showFieldError('err-reg-email', 'This email is already registered.');
+          return;
+        }
+
+        const newUser = { name, email, phone, password };
+        users.push(newUser);
+        localStorage.setItem('auracare_users', JSON.stringify(users));
+
+        sessionStorage.setItem('auracare_active_user', JSON.stringify(newUser));
+        AuraCare.Toasts.success('Profile created and logged in.');
+
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 800);
+      };
+
+      // Login Form validation & submit
+      loginForm.onsubmit = (e) => {
+        e.preventDefault();
+        clearErrors();
+
+        const email = document.getElementById('login-email').value.trim().toLowerCase();
+        const password = document.getElementById('login-password').value;
+
+        let hasError = false;
+
+        if (!email || !emailRegex.test(email)) {
+          showFieldError('err-login-email', 'Please enter a valid email address.');
+          hasError = true;
+        }
+
+        if (!password) {
+          showFieldError('err-login-password', 'Password is required.');
+          hasError = true;
+        }
+
+        if (hasError) return;
+
+        const users = JSON.parse(localStorage.getItem('auracare_users')) || [];
+        
+        // Auto-seed default credentials if localDB is empty
+        if (users.length === 0) {
+          const seedUser = {
+            name: 'Dr. Daniel Ross',
+            email: 'd.ross@hospital.org',
+            phone: '9876543210', // Starts with 9 (valid Indian phone number)
+            password: 'Password1!'
+          };
+          users.push(seedUser);
+          localStorage.setItem('auracare_users', JSON.stringify(users));
+        }
+
+        const matchUser = users.find(u => u.email === email && u.password === password);
+
+        if (matchUser) {
+          sessionStorage.setItem('auracare_active_user', JSON.stringify(matchUser));
+          AuraCare.Toasts.success(`Access granted. Welcome, ${matchUser.name}`);
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 800);
+        } else {
+          showFieldError('err-login-password', 'Invalid clinical credentials.');
+        }
+      };
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

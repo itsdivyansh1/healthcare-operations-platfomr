@@ -2,66 +2,7 @@ window.AuraCare = window.AuraCare || {};
 window.AuraCare.Views = window.AuraCare.Views || {};
 
 AuraCare.Views.Resources = {
-  render: function() {
-    const viewport = document.getElementById('app-viewport');
-    
-    viewport.innerHTML = `
-      <div class="fade-in">
-        <!-- Header -->
-        <div style="margin-bottom: 24px;">
-          <h1 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;">Facility Resources & Bed Grid</h1>
-          <p style="color: var(--text-secondary); font-size: 0.8rem;">Monitor live ward coordinates, allocate beds for admitted patients, and manage pharmaceutical stockpiles.</p>
-        </div>
-
-        <!-- Section split layout -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
-          <!-- Bed Grid Coordinates Card -->
-          <div class="card" style="padding: 24px;">
-            <div class="flex-between" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px;">
-              <h3 style="font-size: 1.05rem; font-weight: 600; display:flex; align-items:center; gap:8px;"><i data-lucide="layout-grid" style="color:var(--primary); width:18px;"></i> Hospital Bed Layout Mapping</h3>
-              <div style="display:flex; gap:10px; font-size:0.7rem; font-weight:600;">
-                <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--success);display:inline-block;"></span> Vacant</span>
-                <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--primary);display:inline-block;"></span> Admitted</span>
-                <span style="display:flex; align-items:center; gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background-color:var(--danger);display:inline-block;"></span> Critical</span>
-              </div>
-            </div>
-
-            <!-- ICU Section -->
-            <div class="ward-section">
-              <div class="ward-header" style="color:var(--danger);">Intensive Care Unit (ICU)</div>
-              <div class="bed-grid" id="ward-grid-icu"></div>
-            </div>
-
-            <!-- Emergency Section -->
-            <div class="ward-section">
-              <div class="ward-header" style="color:var(--warning);">Emergency Room (ER)</div>
-              <div class="bed-grid" id="ward-grid-emergency"></div>
-            </div>
-
-            <!-- General Ward Section -->
-            <div class="ward-section">
-              <div class="ward-header" style="color:var(--success);">General Medicine Ward</div>
-              <div class="bed-grid" id="ward-grid-gw"></div>
-            </div>
-
-            <!-- Pediatrics Section -->
-            <div class="ward-section">
-              <div class="ward-header" style="color:var(--info);">Pediatrics Ward</div>
-              <div class="bed-grid" id="ward-grid-ped"></div>
-            </div>
-          </div>
-
-          <!-- Medical Inventory Stock Tracker Card -->
-          <div class="card" style="padding: 24px;">
-            <h3 class="card-title" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;"><i data-lucide="boxes" style="color:var(--secondary); width:18px;"></i> Supplies Inventory Roster</h3>
-            <div style="display:flex; flex-direction:column; gap:14px;" id="inventory-list-container">
-              <!-- Rendered reactively -->
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
+  init: function() {
     this.renderWards();
     this.renderInventory();
   },
@@ -74,6 +15,8 @@ AuraCare.Views.Resources = {
     const erContainer = document.getElementById('ward-grid-emergency');
     const gwContainer = document.getElementById('ward-grid-gw');
     const pedContainer = document.getElementById('ward-grid-ped');
+
+    if (!icuContainer || !erContainer || !gwContainer || !pedContainer) return;
 
     const generateBedHtml = (bed) => {
       let cssClass = 'available';
@@ -157,7 +100,7 @@ AuraCare.Views.Resources = {
         const adjustValue = parseInt(btn.getAttribute('data-val'), 10);
         
         AuraCare.Store.adjustStock(id, adjustValue);
-        this.render();
+        this.renderInventory();
       });
     });
   },
@@ -198,7 +141,7 @@ AuraCare.Views.Resources = {
               AuraCare.Store.dischargePatient(patient.id);
               AuraCare.Toasts.success(`Patient ${patient.name} discharged successfully.`);
               AuraCare.Modal.close();
-              this.render();
+              this.renderWards();
             }
           }
         },
@@ -208,7 +151,8 @@ AuraCare.Views.Resources = {
           onClick: () => {
             AuraCare.Modal.close();
             setTimeout(() => {
-              window.AuraCare.Views.Patients.openPatientProfileModal(patient.id);
+              // Redirect to patients page with search parameter if desired, or open EMR modal there
+              window.location.href = `patients.html?id=${patient.id}`;
             }, 250);
           }
         }
@@ -263,7 +207,7 @@ AuraCare.Views.Resources = {
               AuraCare.Store.allocateBed(bedId, patientId);
               AuraCare.Toasts.success('Bed allocated.');
               AuraCare.Modal.close();
-              this.render();
+              this.renderWards();
             }
           }
         }
