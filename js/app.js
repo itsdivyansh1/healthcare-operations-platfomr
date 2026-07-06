@@ -11,6 +11,7 @@ const App = {
 
     // 3. Update user details in sidebar footer
     this.updateSidebarUserData();
+    this.applyRoleRestrictions();
 
     // 4. Setup global layout events (mobile sidebars, logouts, drawers)
     this.setupGlobalEvents();
@@ -27,7 +28,63 @@ const App = {
   },
 
   isLoggedIn: function() {
-    return sessionStorage.getItem('opscare_active_user') !== null;
+    const userJson = sessionStorage.getItem('opscare_active_user');
+    if (!userJson) return false;
+    try {
+      const user = JSON.parse(userJson);
+      const pathLower = window.location.pathname.toLowerCase();
+      
+      // If Admin
+      if (user.email === 'admin@opscare.com') {
+        if (user.role !== 'admin') {
+          sessionStorage.removeItem('opscare_active_user');
+          window.location.href = 'login.html';
+          return false;
+        }
+        // Redirect to admin.html if on doctor page
+        if (!pathLower.includes('admin.html')) {
+          window.location.href = 'admin.html';
+          return false;
+        }
+        return true;
+      }
+
+      // Check database to make sure they exist and are verified
+      const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+      const match = users.find(u => u.email === user.email);
+      if (!match || match.verified === false) {
+        sessionStorage.removeItem('opscare_active_user');
+        window.location.href = 'login.html';
+        return false;
+      }
+      
+      // Doctors/Staff/Nurses/Techs should not access admin.html
+      if (pathLower.includes('admin.html')) {
+        window.location.href = 'dashboard.html';
+        return false;
+      }
+
+      // Doctor role path checking: restricted from resources.html, staff.html, and billing.html
+      if (user.role === 'doctor') {
+        if (pathLower.includes('resources.html') || pathLower.includes('staff.html') || pathLower.includes('billing.html')) {
+          window.location.href = 'dashboard.html';
+          return false;
+        }
+      }
+
+      // Nurse and Technician path checking: restricted from resources.html, staff.html, and billing.html
+      if (user.role === 'nurse' || user.role === 'technician') {
+        if (pathLower.includes('resources.html') || pathLower.includes('staff.html') || pathLower.includes('billing.html')) {
+          window.location.href = 'dashboard.html';
+          return false;
+        }
+      }
+      
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+    return true;
   },
 
   updateSidebarUserData: function() {
@@ -53,6 +110,122 @@ const App = {
         initials = names[0].substring(0, 2).toUpperCase();
       }
       avatarEl.textContent = initials;
+    }
+  },
+
+  applyRoleRestrictions: function() {
+    const userJson = sessionStorage.getItem('opscare_active_user');
+    if (!userJson) return;
+    try {
+      const user = JSON.parse(userJson);
+      
+      // Centralize roster additions: hide manual roster addition for all console views
+      const styleGlobal = document.createElement('style');
+      styleGlobal.innerHTML = `
+        #btn-add-staff {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(styleGlobal);
+      
+      // Update sidebar user role badge designation correctly
+      const roleEl = document.querySelector('.user-role');
+      if (roleEl) {
+        if (user.role === 'doctor') roleEl.textContent = 'Physician';
+        else if (user.role === 'nurse') roleEl.textContent = 'Nurse';
+        else if (user.role === 'technician') roleEl.textContent = 'Technician';
+        else if (user.role === 'staff') roleEl.textContent = 'Support Staff';
+      }
+
+      // Role-specific action hiding to implement precise clinical scopes
+      const style = document.createElement('style');
+      if (user.role === 'staff') {
+        // Clinical Staff (Allocator): Can Admit and Discharge, but cannot record vitals or write prescriptions
+        style.innerHTML = `
+          #btn-save-vitals,
+          #btn-add-med,
+          .btn-remove-med,
+          #new-med-input,
+          #btn-submit-note,
+          #timeline-note-text,
+          #timeline-signature,
+          #btn-create-invoice,
+          .btn-pay-bill {
+            display: none !important;
+          }
+        `;
+        document.head.appendChild(style);
+      } else if (user.role === 'doctor') {
+        // Doctor: Full clinical access, but hides admissions/discharge, operations dispatchers, right-side telemetry panel, and operations/billing pages
+        style.innerHTML = `
+          #btn-admit-patient,
+          .btn-discharge,
+          #ops-dispatch-card,
+          .workspace-right,
+          a[href="resources.html"],
+          a[href="staff.html"],
+          a[href="billing.html"] {
+            display: none !important;
+          }
+          .clinical-workspace {
+            grid-template-columns: 1fr !important;
+          }
+        `;
+        document.head.appendChild(style);
+      } else if (user.role === 'nurse') {
+        // Nurse: Can record vitals, but hides Admissions, prescriptions, billing, dispatchers, telemetry, and operations/billing pages
+        style.innerHTML = `
+          #btn-admit-patient,
+          .btn-discharge,
+          #btn-add-med,
+          .btn-remove-med,
+          #new-med-input,
+          #btn-submit-note,
+          #timeline-note-text,
+          #timeline-signature,
+          #btn-create-invoice,
+          .btn-pay-bill,
+          #ops-dispatch-card,
+          .workspace-right,
+          a[href="resources.html"],
+          a[href="staff.html"],
+          a[href="billing.html"] {
+            display: none !important;
+          }
+          .clinical-workspace {
+            grid-template-columns: 1fr !important;
+          }
+        `;
+        document.head.appendChild(style);
+      } else if (user.role === 'technician') {
+        // Technician: Read-only EMR viewer, hides write actions, dispatchers, telemetry, and operations/billing pages
+        style.innerHTML = `
+          #btn-admit-patient,
+          .btn-discharge,
+          #btn-save-vitals,
+          #btn-add-med,
+          .btn-remove-med,
+          #new-med-input,
+          #btn-submit-note,
+          #timeline-note-text,
+          #timeline-signature,
+          #btn-create-invoice,
+          .btn-pay-bill,
+          #ops-dispatch-card,
+          .workspace-right,
+          a[href="resources.html"],
+          a[href="staff.html"],
+          a[href="billing.html"] {
+            display: none !important;
+          }
+          .clinical-workspace {
+            grid-template-columns: 1fr !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      console.error(e);
     }
   },
 
@@ -96,24 +269,118 @@ const App = {
 
     // 2. Redraw Right Panel Telemetry Beds Gauge
     const beds = Store.getBeds();
-    const occupied = beds.filter(b => b.status !== 'available').length;
-    const totalBeds = beds.length;
-    const occupancyRate = totalBeds > 0 ? Math.round((occupied / totalBeds) * 100) : 0;
+    const activeUserJson = sessionStorage.getItem('opscare_active_user');
+    const user = activeUserJson ? JSON.parse(activeUserJson) : null;
+    const specialty = user && user.specialty ? user.specialty.toLowerCase() : '';
+
+    let gaugeLabel = 'Bed Occupancy';
+    let gaugeValue = 0;
+    let alarmTitle = 'Medical Stock Alarms';
+    let lowStockItems = [];
+
+    // Base inventory
+    const inventory = Store.getInventory() || [];
+    const baseLowStocks = inventory.filter(item => item.stock < item.minStock);
+
+    if (user && user.role === 'doctor') {
+      if (specialty.includes('cardio')) {
+        gaugeLabel = 'ICU Cardiac Bed Occupancy';
+        const icuBeds = beds.filter(b => b.ward === 'ICU');
+        const icuOccupied = icuBeds.filter(b => b.status !== 'available').length;
+        gaugeValue = icuBeds.length > 0 ? Math.round((icuOccupied / icuBeds.length) * 100) : 0;
+        alarmTitle = 'Cardiology Supplies Alerts';
+        
+        lowStockItems = [
+          { name: 'Pacemaker Transvenous Leads', minStock: 10, stock: 3, unit: 'kits' },
+          { name: 'Portable Defibrillators', minStock: 6, stock: 2, unit: 'units' },
+          { name: 'Heparin Sodium Vials', minStock: 50, stock: 12, unit: 'vials' }
+        ];
+      } else if (specialty.includes('pediatr')) {
+        gaugeLabel = 'NICU/Pediatric Bed Occupancy';
+        const pedsBeds = beds.filter(b => b.ward === 'Pediatrics');
+        const pedsOccupied = pedsBeds.filter(b => b.status !== 'available').length;
+        gaugeValue = pedsBeds.length > 0 ? Math.round((pedsOccupied / pedsBeds.length) * 100) : 0;
+        alarmTitle = 'Pediatric Stock Alerts';
+        
+        lowStockItems = [
+          { name: 'Neonatal Incubator Units', minStock: 4, stock: 1, unit: 'units' },
+          { name: 'Pediatric Amoxicillin Susp.', minStock: 30, stock: 8, unit: 'vials' },
+          { name: 'Infant SpO2 Sensors', minStock: 15, stock: 4, unit: 'pieces' }
+        ];
+      } else if (specialty.includes('endo') || specialty.includes('diabet')) {
+        gaugeLabel = 'Endocrine Ward Occupancy';
+        const endocrineBeds = beds.filter(b => b.ward === 'General Ward');
+        const endocrineOccupied = endocrineBeds.filter(b => b.status !== 'available').length;
+        gaugeValue = endocrineBeds.length > 0 ? Math.round((endocrineOccupied / endocrineBeds.length) * 100) : 0;
+        alarmTitle = 'Endocrine Stock Alerts';
+
+        lowStockItems = [
+          { name: 'Insulin Aspart Quick-Pens', minStock: 25, stock: 6, unit: 'pens' },
+          { name: 'Continuous Glucose Sensors', minStock: 40, stock: 11, unit: 'sensors' },
+          { name: 'Glucagon Emergency Kits', minStock: 10, stock: 2, unit: 'kits' }
+        ];
+      } else if (specialty.includes('emerg') || specialty.includes('trauma')) {
+        gaugeLabel = 'Emergency Room Occupancy';
+        const erBeds = beds.filter(b => b.ward === 'Emergency');
+        const erOccupied = erBeds.filter(b => b.status !== 'available').length;
+        gaugeValue = erBeds.length > 0 ? Math.round((erOccupied / erBeds.length) * 100) : 0;
+        alarmTitle = 'Emergency Room Alerts';
+
+        lowStockItems = [
+          { name: 'Epinephrine Vials (1mg/mL)', minStock: 30, stock: 8, unit: 'vials' },
+          { name: 'Trauma Gauze Dressings', minStock: 200, stock: 45, unit: 'boxes' },
+          { name: 'Rapid Intubation Packs', minStock: 8, stock: 2, unit: 'packs' }
+        ];
+      } else {
+        // General / Internal Medicine
+        gaugeLabel = 'Ward Allocation Occupancy';
+        const occupied = beds.filter(b => b.status !== 'available').length;
+        gaugeValue = beds.length > 0 ? Math.round((occupied / beds.length) * 100) : 0;
+        alarmTitle = 'Internal Medicine Stock';
+        
+        lowStockItems = baseLowStocks;
+      }
+    } else {
+      // Default / Clinical Allocator / Admin
+      gaugeLabel = 'Bed Allocation Capacity';
+      const occupied = beds.filter(b => b.status !== 'available').length;
+      gaugeValue = beds.length > 0 ? Math.round((occupied / beds.length) * 100) : 0;
+      alarmTitle = 'Medical Stock Alarms';
+      
+      lowStockItems = baseLowStocks;
+    }
+
+    // Safely update labels in right panel header if elements exist
+    const panelTitleEl = document.getElementById('telemetry-panel-title') || document.querySelector('.workspace-right-header span');
+    if (panelTitleEl) {
+      if (user && user.role === 'doctor') {
+        panelTitleEl.textContent = `${user.specialty || 'Clinical'} Specialty Telemetry`;
+      } else {
+        panelTitleEl.textContent = 'Real-time Clinical Telemetry';
+      }
+    }
+
+    const gaugeTitleEl = document.getElementById('telemetry-gauge-title') || document.querySelector('.telemetry-card .flex-between span');
+    if (gaugeTitleEl) {
+      gaugeTitleEl.textContent = gaugeLabel;
+    }
+
+    const stockTitleEl = document.getElementById('telemetry-stock-title') || document.querySelector('.workspace-right-content > div:nth-child(2) > span');
+    if (stockTitleEl) {
+      stockTitleEl.textContent = alarmTitle;
+    }
     
     const gaugeEl = document.getElementById('telemetry-beds-gauge');
     if (gaugeEl && typeof Charts !== 'undefined') {
-      Charts.renderGauge('telemetry-beds-gauge', occupancyRate, {
-        color: occupancyRate > 80 ? 'var(--danger)' : 'var(--primary)',
+      Charts.renderGauge('telemetry-beds-gauge', gaugeValue, {
+        color: gaugeValue > 80 ? 'var(--danger)' : 'var(--primary)',
         labelText: 'Occupied'
       });
     }
 
     // 3. Redraw Right Panel Low Stocks Alerts
-    const inventory = Store.getInventory();
     const lowStockAlertsEl = document.getElementById('telemetry-stock-alerts');
     if (lowStockAlertsEl) {
-      const lowStockItems = inventory.filter(item => item.stock < item.minStock);
-      
       if (lowStockItems.length === 0) {
         lowStockAlertsEl.innerHTML = `
           <div class="flex-center" style="height:100%; color:var(--text-muted); text-align:center; font-size:0.75rem; padding: 20px 0;">

@@ -23,7 +23,25 @@ const AppointmentsView = {
     const tableBody = document.getElementById('appointments-table-body');
     if (!tableBody) return;
 
-    const apts = Store.getAppointments();
+    let apts = Store.getAppointments();
+
+    const activeUserJson = sessionStorage.getItem('opscare_active_user');
+    if (activeUserJson) {
+      const activeUser = JSON.parse(activeUserJson);
+      if (activeUser.role === 'doctor') {
+        apts = apts.filter(a => a.doctorName && a.doctorName.toLowerCase().includes(activeUser.name.toLowerCase()));
+      } else if (activeUser.role === 'nurse' || activeUser.role === 'technician') {
+        const patients = Store.getPatients();
+        let myPatients = [];
+        if (activeUser.role === 'nurse') {
+          myPatients = patients.filter(p => p.nurse && p.nurse.toLowerCase().includes(activeUser.name.toLowerCase()));
+        } else {
+          myPatients = patients.filter(p => p.technician && p.technician.toLowerCase().includes(activeUser.name.toLowerCase()));
+        }
+        const patientNames = myPatients.map(p => (p.name || '').toLowerCase());
+        apts = apts.filter(a => a.patientName && patientNames.includes(a.patientName.toLowerCase()));
+      }
+    }
 
     if (apts.length === 0) {
       tableBody.innerHTML = `

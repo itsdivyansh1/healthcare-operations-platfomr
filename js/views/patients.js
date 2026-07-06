@@ -6,6 +6,13 @@ const PatientsView = {
   init: function() {
     this.bindEvents();
     this.renderPatientRows();
+    
+    // Auto-open patient profile modal if requested via query string parameter
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get('id');
+    if (idParam) {
+      this.openPatientProfileModal(idParam);
+    }
   },
 
   bindEvents: function() {
@@ -58,6 +65,19 @@ const PatientsView = {
     if (!tableBody) return;
 
     let patients = Store.getPatients();
+
+    // Filter by active user practitioner caseload
+    const activeUserJson = sessionStorage.getItem('opscare_active_user');
+    if (activeUserJson) {
+      const activeUser = JSON.parse(activeUserJson);
+      if (activeUser.role === 'doctor') {
+        patients = patients.filter(p => p.doctor && p.doctor.toLowerCase().includes(activeUser.name.toLowerCase()));
+      } else if (activeUser.role === 'nurse') {
+        patients = patients.filter(p => p.nurse && p.nurse.toLowerCase().includes(activeUser.name.toLowerCase()));
+      } else if (activeUser.role === 'technician') {
+        patients = patients.filter(p => p.technician && p.technician.toLowerCase().includes(activeUser.name.toLowerCase()));
+      }
+    }
 
     // Filter discharged vs active patients
     patients = patients.filter(p => !p.dischargeDate);
@@ -161,7 +181,10 @@ const PatientsView = {
 
   openAdmissionModal: function(preselectedBedId) {
     const availableBeds = Store.getBeds().filter(b => b.status === 'available');
-    const doctors = Store.getStaff().filter(s => s.role === 'Doctor');
+    const staffList = Store.getStaff();
+    const doctors = staffList.filter(s => s.role === 'Doctor');
+    const nurses = staffList.filter(s => s.role === 'Nurse');
+    const technicians = staffList.filter(s => s.role === 'Technician');
     const uniqueId = Utils.generateId('PAT', Store.getPatients());
 
     const hasPreselected = preselectedBedId && Store.getBeds().find(b => b.id === preselectedBedId);
@@ -171,6 +194,8 @@ const PatientsView = {
 
     const bedOptions = availableBeds.map(b => `<option value="${b.id}"${b.id === preselectedBedId ? ' selected' : ''}>${b.id} (${b.ward})</option>`).join('');
     const docOptions = doctors.map(d => `<option value="${d.name}">${d.name} (${d.specialty})</option>`).join('');
+    const nurseOptions = nurses.map(n => `<option value="${n.name}">${n.name} (${n.specialty})</option>`).join('');
+    const techOptions = technicians.map(t => `<option value="${t.name}">${t.name} (${t.specialty})</option>`).join('');
 
     const modalBody = `
       <form id="patient-admission-form" class="form-grid">
@@ -210,10 +235,25 @@ const PatientsView = {
         <div class="form-group">
           <label class="form-label" for="adm-doctor">Assigned Doctor</label>
           <select id="adm-doctor" class="form-control" required>
+            <option value="">-- Select Doctor --</option>
             ${docOptions}
           </select>
         </div>
         <div class="form-group">
+          <label class="form-label" for="adm-nurse">Assigned Nurse</label>
+          <select id="adm-nurse" class="form-control" required>
+            <option value="">-- Select Nurse --</option>
+            ${nurseOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adm-tech">Assigned Technician</label>
+          <select id="adm-tech" class="form-control">
+            <option value="">-- None (Unassigned) --</option>
+            ${techOptions}
+          </select>
+        </div>
+        <div class="form-group full-width">
           <label class="form-label" for="adm-bed">Allocate Bed Location</label>
           <select id="adm-bed" class="form-control" required>
             <option value="">-- Select Bed --</option>
@@ -241,7 +281,11 @@ const PatientsView = {
             const diagnosis = document.getElementById('adm-diagnosis').value;
             const severity = document.getElementById('adm-severity').value;
             const doctor = document.getElementById('adm-doctor').value;
+            const nurse = document.getElementById('adm-nurse').value;
+            const technician = document.getElementById('adm-tech').value;
             const bedId = document.getElementById('adm-bed').value;
+            const bedObj = Store.getBeds().find(b => b.id === bedId);
+            const wardName = bedObj ? bedObj.ward : 'General Ward';
 
             const newPatient = {
               id: uniqueId,
@@ -252,7 +296,10 @@ const PatientsView = {
               admissionDate: new Date().toISOString().substring(0, 10),
               diagnosis,
               doctor,
+              nurse,
+              technician,
               bed: bedId,
+              ward: wardName,
               vitals: { bp: '120/80', hr: 75, temp: '98.6°F', spo2: 98 },
               medications: [],
               billingStatus: 'unbilled',
@@ -260,8 +307,8 @@ const PatientsView = {
                 {
                   date: new Date().toISOString().replace('T', ' ').substring(0, 16),
                   type: 'admission',
-                  author: doctor,
-                  text: `Intake records complete. Primary diagnosis: ${diagnosis}. Initial severity: ${severity}.`
+                  author: doctor || 'Clinical Allocator',
+                  text: `Intake records complete. Assigned Doctor: ${doctor || 'None'}, Assigned Nurse: ${nurse || 'None'}, Assigned Technician: ${technician || 'None'}. Primary diagnosis: ${diagnosis}. Initial severity: ${severity}.`
                 }
               ]
             };
@@ -283,11 +330,72 @@ const PatientsView = {
       const p = Store.getPatient(patientId);
       if (!p) return;
       
+      const activeUserJson = sessionStorage.getItem('opscare_active_user');
+      const currentUser = activeUserJson ? JSON.parse(activeUserJson) : null;
+      const canWriteVitals = currentUser && (currentUser.role === 'doctor' || currentUser.role === 'nurse');
+      const readOnlyAttr = canWriteVitals ? '' : ' readonly disabled';
+
       const age = p.dob ? Utils.calculateAge(p.dob) : 'N/A';
       
       const history = p.history || [];
       const medications = p.medications || [];
       const vitals = p.vitals || { bp: '120/80', hr: 75, temp: '98.6°F', spo2: 98 };
+
+      const doctors = Store.getStaff().filter(s => s.role === 'Doctor');
+      const nurses = Store.getStaff().filter(s => s.role === 'Nurse');
+      const technicians = Store.getStaff().filter(s => s.role === 'Technician');
+
+      const isAllocator = activeUserJson && JSON.parse(activeUserJson).role === 'staff';
+      
+      let allocationHtml = '';
+      if (isAllocator) {
+        const docOpts = doctors.map(d => `<option value="${d.name}" ${p.doctor === d.name ? 'selected' : ''}>${d.name} (${d.specialty})</option>`).join('');
+        const nurseOpts = nurses.map(n => `<option value="${n.name}" ${p.nurse === n.name ? 'selected' : ''}>${n.name} (${n.specialty})</option>`).join('');
+        const techOpts = technicians.map(t => `<option value="${t.name}" ${p.technician === t.name ? 'selected' : ''}>${t.name} (${t.specialty})</option>`).join('');
+
+        allocationHtml = `
+          <!-- Allocations Form Card -->
+          <div class="card" style="padding:16px; background-color:var(--bg-app); margin-top:8px;">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:12px;"><i data-lucide="user-cog" style="color:var(--primary);width:16px;"></i> Staff Care Team Allocations</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:0.75rem;">Assigned Doctor</label>
+                <select id="alloc-doctor" class="form-control" style="font-size:0.8125rem; height:32px; padding:4px 8px;">
+                  <option value="">-- Unassigned --</option>
+                  ${docOpts}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:0.75rem;">Assigned Nurse</label>
+                <select id="alloc-nurse" class="form-control" style="font-size:0.8125rem; height:32px; padding:4px 8px;">
+                  <option value="">-- Unassigned --</option>
+                  ${nurseOpts}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:0.75rem;">Assigned Technician</label>
+                <select id="alloc-technician" class="form-control" style="font-size:0.8125rem; height:32px; padding:4px 8px;">
+                  <option value="">-- Unassigned --</option>
+                  ${techOpts}
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" id="btn-save-allocations" style="width:100%; font-size:0.75rem; margin-top:6px;"><i data-lucide="save" style="width:12px;"></i> Save Allocations</button>
+            </div>
+          </div>
+        `;
+      } else {
+        allocationHtml = `
+          <!-- Allocations Display Card -->
+          <div class="card" style="padding:16px; background-color:var(--bg-app); margin-top:8px;">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:12px;"><i data-lucide="user-check" style="color:var(--success);width:16px;"></i> Assigned Care Team</div>
+            <div style="font-size:0.8125rem; line-height:1.6; display:flex; flex-direction:column; gap:4px;">
+              <div><strong>Doctor:</strong> ${p.doctor || '<span style="color:var(--text-muted);">Unassigned</span>'}</div>
+              <div><strong>Nurse:</strong> ${p.nurse || '<span style="color:var(--text-muted);">Unassigned</span>'}</div>
+              <div><strong>Technician:</strong> ${p.technician || '<span style="color:var(--text-muted);">Unassigned</span>'}</div>
+            </div>
+          </div>
+        `;
+      }
 
       const timelineHtml = history.map(h => {
         let borderClass = '';
@@ -327,25 +435,27 @@ const PatientsView = {
             <div style="margin-top:8px;">${Utils.getSeverityBadge(p.severity || 'low')}</div>
           </div>
 
+          ${allocationHtml}
+
           <!-- Vitals Panel Card -->
           <div class="card" style="padding:16px; background-color:var(--bg-app);">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:12px;"><i data-lucide="heart" style="color:var(--danger);width:16px;"></i> Active Clinical Vitals</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" style="font-size:0.75rem;">Blood Pressure</label>
-                <input type="text" id="vit-bp" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.bp || ''}">
+                <input type="text" id="vit-bp" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.bp || ''}"${readOnlyAttr}>
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" style="font-size:0.75rem;">Pulse (bpm)</label>
-                <input type="number" id="vit-hr" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.hr || ''}">
+                <input type="number" id="vit-hr" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.hr || ''}"${readOnlyAttr}>
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" style="font-size:0.75rem;">SpO2 (%)</label>
-                <input type="number" id="vit-spo2" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.spo2 || ''}">
+                <input type="number" id="vit-spo2" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.spo2 || ''}"${readOnlyAttr}>
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" style="font-size:0.75rem;">Temperature (°F)</label>
-                <input type="text" id="vit-temp" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.temp || ''}">
+                <input type="text" id="vit-temp" class="form-control" style="padding:6px 10px; font-size:0.8125rem;" value="${vitals.temp || ''}"${readOnlyAttr}>
               </div>
             </div>
             <button class="btn btn-secondary btn-sm" id="btn-save-vitals" style="margin-top:16px; width:100%; font-size:0.75rem;"><i data-lucide="save" style="width:12px;"></i> Save Clinical Vitals</button>
@@ -509,6 +619,28 @@ const PatientsView = {
           drawProfile();
         }
       });
+
+      if (isAllocator) {
+        const btnSaveAlloc = content.querySelector('#btn-save-allocations');
+        if (btnSaveAlloc) {
+          btnSaveAlloc.addEventListener('click', () => {
+            const docVal = content.querySelector('#alloc-doctor').value;
+            const nurseVal = content.querySelector('#alloc-nurse').value;
+            const techVal = content.querySelector('#alloc-technician').value;
+
+            Store.updatePatient(patientId, {
+              doctor: docVal,
+              nurse: nurseVal,
+              technician: techVal
+            });
+            
+            Toasts.success('Care team allocations updated.');
+            Modal.close();
+            PatientsView.openPatientProfileModal(patientId);
+            PatientsView.renderPatientRows();
+          });
+        }
+      }
 
       Modal.open(`Electronic Health Record (EMR) - #${p.id}`, content, [
         {

@@ -24,6 +24,8 @@ const Store = {
       ward: 'ICU',
       bed: 'ICU-1',
       doctor: 'Dr. Sarah Jenkins',
+      nurse: 'Nurse Emily Vance',
+      technician: 'Technician Jordan Vance',
       vitals: { bp: '142/90', hr: 98, temp: '98.9°F', spo2: 91 },
       medications: ['Aspirin 325mg', 'Clopidogrel 75mg', 'Heparin Infusion'],
       billingStatus: 'pending',
@@ -44,6 +46,8 @@ const Store = {
       ward: 'Emergency',
       bed: 'ER-3',
       doctor: 'Dr. Alexander Mercer',
+      nurse: 'Nurse Marcus Cole',
+      technician: 'Technician Jordan Vance',
       vitals: { bp: '110/68', hr: 112, temp: '100.1°F', spo2: 97 },
       medications: ['Regular Insulin IV Infusion', '0.9% Normal Saline IV', 'Potassium Chloride'],
       billingStatus: 'unbilled',
@@ -64,6 +68,8 @@ const Store = {
       ward: 'General Ward',
       bed: 'GW-2',
       doctor: 'Dr. Maya Patel',
+      nurse: 'Nurse Sarah Connor',
+      technician: 'Technician Jordan Vance',
       vitals: { bp: '128/82', hr: 84, temp: '99.4°F', spo2: 94 },
       medications: ['Ceftriaxone 1g IV', 'Albuterol Nebulizer Q4H', 'Prednisone 40mg'],
       billingStatus: 'pending',
@@ -84,6 +90,8 @@ const Store = {
       ward: 'Pediatrics',
       bed: 'PED-1',
       doctor: 'Dr. James Lin',
+      nurse: 'Nurse Emily Vance',
+      technician: 'Technician Jordan Vance',
       vitals: { bp: '98/62', hr: 95, temp: '101.3°F', spo2: 99 },
       medications: ['Acetaminophen IV', 'Piperacillin/Tazobactam IV'],
       billingStatus: 'unbilled',
@@ -102,13 +110,15 @@ const Store = {
       diagnosis: 'Cellulitis of Left Lower Extremity',
       ward: 'General Ward',
       bed: 'GW-5',
-      doctor: 'Dr. Maya Patel',
+      doctor: 'Dr. Daniel Ross',
+      nurse: 'Nurse Emily Vance',
+      technician: 'Technician Jordan Vance',
       vitals: { bp: '135/85', hr: 76, temp: '98.2°F', spo2: 98 },
       medications: ['Ancef 1g IV Q8H', 'Elevation of LLE'],
       billingStatus: 'paid',
       history: [
-        { date: '2026-06-30 14:00', type: 'admission', author: 'Dr. Maya Patel', text: 'Admitted with erythema and warmth in left calf. Demarcated border drawn.' },
-        { date: '2026-07-02 10:00', type: 'assessment', author: 'Dr. Maya Patel', text: 'Redness fading significantly. Oral antibiotic transition planned.' }
+        { date: '2026-06-30 14:00', type: 'admission', author: 'Dr. Daniel Ross', text: 'Admitted with erythema and warmth in left calf. Demarcated border drawn.' },
+        { date: '2026-07-02 10:00', type: 'assessment', author: 'Dr. Daniel Ross', text: 'Redness fading significantly. Oral antibiotic transition planned.' }
       ]
     }
   ],
@@ -191,6 +201,21 @@ const Store = {
       localStorage.setItem(this.KEYS.INVENTORY, JSON.stringify(this.SEED_INVENTORY));
       localStorage.setItem(this.KEYS.BILLING, JSON.stringify(this.SEED_BILLING));
       localStorage.setItem(this.KEYS.LOGS, JSON.stringify(this.SEED_LOGS));
+    } else {
+      // Caseload upgrade: Ensure existing legacy patient records have correct nurse/tech care team assignments
+      let currentPatients = JSON.parse(localStorage.getItem(this.KEYS.PATIENTS)) || [];
+      let updated = false;
+      currentPatients.forEach(p => {
+        const seedMatch = this.SEED_PATIENTS.find(sp => sp.id === p.id);
+        if (seedMatch) {
+          if (!p.nurse) { p.nurse = seedMatch.nurse; updated = true; }
+          if (!p.technician) { p.technician = seedMatch.technician; updated = true; }
+          if (p.id === 'PAT-005' && p.doctor !== 'Dr. Daniel Ross') { p.doctor = 'Dr. Daniel Ross'; updated = true; }
+        }
+      });
+      if (updated) {
+        localStorage.setItem(this.KEYS.PATIENTS, JSON.stringify(currentPatients));
+      }
     }
   },
 

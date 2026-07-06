@@ -108,10 +108,30 @@ const ResourcesView = {
     if (!bed) return;
 
     const patients = Store.getPatients();
+    const activeUserJson = sessionStorage.getItem('opscare_active_user');
+    const user = activeUserJson ? JSON.parse(activeUserJson) : null;
+    const isAllocator = user && user.role === 'staff';
 
     if (bed.status !== 'available') {
       const patient = patients.find(p => p.id === bed.patientId);
       if (!patient) return;
+
+      // Interconnect check: Practitioners can only inspect details of patients in their caseload
+      if (user && user.role !== 'staff' && user.role !== 'admin') {
+        let isAssigned = false;
+        if (user.role === 'doctor' && patient.doctor && patient.doctor.toLowerCase().includes(user.name.toLowerCase())) {
+          isAssigned = true;
+        } else if (user.role === 'nurse' && patient.nurse && patient.nurse.toLowerCase().includes(user.name.toLowerCase())) {
+          isAssigned = true;
+        } else if (user.role === 'technician' && patient.technician && patient.technician.toLowerCase().includes(user.name.toLowerCase())) {
+          isAssigned = true;
+        }
+        
+        if (!isAssigned) {
+          Toasts.error("Access Denied: This patient is not in your clinical caseload.");
+          return;
+        }
+      }
 
       const modalHtml = `
         <div style="padding:8px 0; font-family:var(--font-body);">
@@ -119,7 +139,7 @@ const ResourcesView = {
           <span style="font-size:0.8rem; color:var(--text-secondary);">EMR ID: ${patient.id} | Severity Status: <strong style="color:var(--danger);">${(patient.severity || 'low').toUpperCase()}</strong></span>
           <div style="margin-top:16px; background-color:var(--bg-app); padding:16px; border-radius:8px; border:1px solid var(--border-color); font-size:0.85rem; line-height:1.6;">
             <p><strong>Primary Diagnosis:</strong> ${patient.diagnosis || 'No Diagnosis'}</p>
-            <p style="margin-top:6px;"><strong>Admitting Physician:</strong> ${patient.doctor || 'Unassigned'}</p>
+            <p style="margin-top:6px;"><strong>Attending Care Team:</strong> Doctor: ${patient.doctor || 'None'} | Nurse: ${patient.nurse || 'None'}</p>
             <p style="margin-top:6px;"><strong>Bed Location Coordinates:</strong> Bed ${bed.number} (${bed.ward} Ward)</p>
           </div>
           <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:var(--text-secondary);">
@@ -129,8 +149,9 @@ const ResourcesView = {
         </div>
       `;
 
-      Modal.open(`Bed Mapping Status - ${bedId}`, modalHtml, [
-        {
+      const buttons = [];
+      if (isAllocator) {
+        buttons.push({
           text: 'Discharge Patient',
           className: 'btn-danger',
           onClick: () => {
@@ -141,20 +162,28 @@ const ResourcesView = {
               this.renderWards();
             }
           }
-        },
-        {
-          text: 'View EHR Profile',
-          className: 'btn-primary',
-          onClick: () => {
-            Modal.close();
-            setTimeout(() => {
-              // Redirect to patients page with search parameter if desired, or open EMR modal there
-              window.location.href = `patients.html?id=${patient.id}`;
-            }, 250);
-          }
+        });
+      }
+
+      buttons.push({
+        text: 'View EHR Profile',
+        className: 'btn-primary',
+        onClick: () => {
+          Modal.close();
+          setTimeout(() => {
+            window.location.href = `patients.html?id=${patient.id}`;
+          }, 250);
         }
-      ]);
+      });
+
+      Modal.open(`Bed Mapping Status - ${bedId}`, modalHtml, buttons);
     } else {
+      // Gated Bed Allocations: Practitioners cannot allocate patients to empty beds
+      if (!isAllocator) {
+        Toasts.info("Empty Bed: Bed allocations can only be managed by Clinical Staff (Allocations).");
+        return;
+      }
+
       const unassignedPatients = patients.filter(p => !p.bed && !p.dischargeDate);
 
       if (unassignedPatients.length === 0) {

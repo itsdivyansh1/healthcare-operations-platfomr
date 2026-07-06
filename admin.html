@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="OpsCare - Administrator Supervision Console" />
+    <title>OpsCare - Admin Operations Console</title>
+
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+
+    <!-- Top Secure Role Guard -->
+    <script>
+      (function() {
+        const activeUserJson = sessionStorage.getItem('opscare_active_user');
+        if (!activeUserJson) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const user = JSON.parse(activeUserJson);
+        if (user.role !== 'admin') {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <!-- App Main Command Shell -->
+    <div class="app-container" id="app-container">
+      <!-- Left Navigation Sidebar -->
+      <aside class="app-sidebar" id="app-sidebar">
+        <div class="sidebar-logo">
+          <div class="logo-icon">
+            <i data-lucide="activity" style="width: 16px; height: 16px; color: white"></i>
+          </div>
+          <div>
+            <span class="logo-text">OpsCare</span>
+          </div>
+          <span class="logo-version">Admin</span>
+        </div>
+
+        <!-- Navigation links -->
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">Clinical Administration</div>
+          
+          <a href="#" class="nav-item active" id="nav-approvals">
+            <i data-lucide="shield-check"></i>
+            <span>Account Approvals</span>
+          </a>
+          
+          <a href="#" class="nav-item" id="nav-staff">
+            <i data-lucide="users"></i>
+            <span>Roster Management</span>
+          </a>
+          
+          <a href="#" class="nav-item" id="nav-patients">
+            <i data-lucide="heart"></i>
+            <span>Patient Records</span>
+          </a>
+          
+          <a href="#" class="nav-item" id="nav-billing">
+            <i data-lucide="credit-card"></i>
+            <span>Billing Ledger</span>
+          </a>
+          
+          <a href="#" class="nav-item" id="nav-logs">
+            <i data-lucide="file-text"></i>
+            <span>Operations Logs</span>
+          </a>
+        </nav>
+
+        <!-- Sidebar Footer user badge -->
+        <div class="sidebar-footer">
+          <div class="user-avatar" id="sidebar-avatar">SA</div>
+          <div class="user-info" style="flex: 1">
+            <span class="user-name">System Admin</span>
+            <span class="user-role">OpsCare Administrator</span>
+          </div>
+          <button
+            class="header-btn"
+            id="btn-logout"
+            title="Secure Exit"
+            style="
+              width: 28px;
+              height: 28px;
+              background: none;
+              border: none;
+              color: var(--text-secondary);
+              cursor: pointer;
+            "
+          >
+            <i data-lucide="log-out" style="width: 14px; height: 14px"></i>
+          </button>
+        </div>
+      </aside>
+
+      <!-- App Content Layout Column -->
+      <main class="app-main">
+        <header class="app-header">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <button
+              id="menu-toggle"
+              class="menu-toggle header-btn"
+              title="Toggle Sidebar"
+            >
+              <i data-lucide="menu"></i>
+            </button>
+            <span
+              style="
+                font-family: var(--font-heading);
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: var(--text-secondary);
+              "
+              id="admin-header-title"
+              >Clinical Approvals Portal</span
+            >
+          </div>
+        </header>
+
+        <!-- Workspace Container -->
+        <div class="workspace-center" style="margin-left: 260px; width: calc(100% - 260px); padding: 24px; overflow-y: auto; height: calc(100vh - 60px);">
+          
+          <!-- TAB 1: Account Approvals -->
+          <div id="section-approvals" class="admin-section">
+            <!-- Summary Cards Row -->
+            <div class="dashboard-metrics-grid" style="margin-bottom: 24px;">
+              <div class="telemetry-card">
+                <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.02em;">Total Registrations</div>
+                <div class="telemetry-value-container">
+                  <span class="telemetry-val" id="stat-total-doctors">0</span>
+                  <span class="telemetry-unit">accounts</span>
+                </div>
+              </div>
+              
+              <div class="telemetry-card">
+                <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.02em;">Pending Verification</div>
+                <div class="telemetry-value-container">
+                  <span class="telemetry-val" id="stat-pending-doctors" style="color: var(--warning);">0</span>
+                  <span class="telemetry-unit">accounts</span>
+                </div>
+              </div>
+              
+              <div class="telemetry-card">
+                <div style="font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.02em;">Verified & Active</div>
+                <div class="telemetry-value-container">
+                  <span class="telemetry-val" id="stat-verified-doctors" style="color: var(--success);">0</span>
+                  <span class="telemetry-unit">accounts</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Approvals Table Card -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Registration Approvals Panel</h3>
+                
+                <!-- Search and Filter controls -->
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <div class="header-search" style="display: flex; width: 220px; background-color: var(--bg-app); border: 1px solid var(--border-color); border-radius: var(--radius-pill); padding: 5px 12px;">
+                    <input type="text" id="admin-search-input" placeholder="Search by name/email..." style="font-size: 0.8rem; width: 100%; border: none; background: transparent; outline: none;" />
+                  </div>
+                  <select id="admin-filter-status" class="form-control" style="width: 140px; font-size: 0.8rem; padding: 5px 12px; height: 30px; border-radius: var(--radius-pill);">
+                    <option value="all">All States</option>
+                    <option value="pending">Pending</option>
+                    <option value="verified">Verified</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Professional Name</th>
+                      <th>Email Address</th>
+                      <th>Phone / Pager Line</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody id="doctors-table-body">
+                    <!-- Dynamic rows go here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Roster Management -->
+          <div id="section-staff" class="admin-section hidden">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Institutional Clinical Roster</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">Manage hospital shifts, duty status, and clinical specialists.</p>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Staff ID</th>
+                      <th>Professional Name</th>
+                      <th>Role</th>
+                      <th>Specialty</th>
+                      <th>Shift Details</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody id="roster-table-body">
+                    <!-- Dynamic rows loaded here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Patient Records -->
+          <div id="section-patients" class="admin-section hidden">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Active Patient Directory</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">Audit active clinical admissions and diagnoses.</p>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>EMR ID</th>
+                      <th>Patient Name</th>
+                      <th>Age / Sex</th>
+                      <th>Severity</th>
+                      <th>Bed Allocated</th>
+                      <th>Attending Doctor</th>
+                      <th>Admissions Status</th>
+                      <th style="text-align: right;">Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody id="patients-table-body-admin">
+                    <!-- Dynamic rows loaded here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: Billing Ledger -->
+          <div id="section-billing" class="admin-section hidden">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Institutional Billing Ledger</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">Supervise clinical invoice audits and outstanding payments.</p>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Invoice ID</th>
+                      <th>Patient Name</th>
+                      <th>Total Amount</th>
+                      <th>Date Issued</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody id="billing-table-body-admin">
+                    <!-- Dynamic rows loaded here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: Operations Logs -->
+          <div id="section-logs" class="admin-section hidden">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0;">Operations Logs Streams</h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">Historical system alarms, stocks events, and admissions logs.</p>
+                </div>
+                <button class="btn btn-danger" id="btn-clear-logs-admin"><i data-lucide="trash-2"></i> Clear Log Stream</button>
+              </div>
+
+              <!-- Table -->
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Log Type</th>
+                      <th>Log Summary Message</th>
+                    </tr>
+                  </thead>
+                  <tbody id="logs-table-body-admin">
+                    <!-- Dynamic logs go here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- Dynamic modals/system toasts -->
+    <div class="modal-overlay"></div>
+    <div class="toasts-container"></div>
+
+    <!-- Lucide Vector Icons Library CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Javascript Modules -->
+    <script src="js/store.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/components/toasts.js"></script>
+    <script src="js/components/modal.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        Store.init();
+
+        // Menu Toggle (Mobile)
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('app-sidebar');
+        if (menuToggle && sidebar) {
+          menuToggle.onclick = (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('open');
+          };
+          document.onclick = (e) => {
+            if (!sidebar.contains(e.target) && e.target !== menuToggle) {
+              sidebar.classList.remove('open');
+            }
+          };
+        }
+
+        // Secure Logout
+        const logoutBtn = document.getElementById('btn-logout');
+        if (logoutBtn) {
+          logoutBtn.onclick = () => {
+            if (confirm('Are you sure you want to securely logout from the Administration Console?')) {
+              sessionStorage.removeItem('opscare_active_user');
+              Toasts.warning('Securely logged out.');
+              setTimeout(() => {
+                window.location.href = 'login.html';
+              }, 600);
+            }
+          };
+        }
+
+        // TABS MANAGER
+        const headerTitle = document.getElementById('admin-header-title');
+        const tabs = [
+          { navId: 'nav-approvals', sectionId: 'section-approvals', title: 'Clinical Approvals Portal', renderFn: loadAndRenderApprovals },
+          { navId: 'nav-staff', sectionId: 'section-staff', title: 'Roster Management Console', renderFn: loadAndRenderStaff },
+          { navId: 'nav-patients', sectionId: 'section-patients', title: 'Patient Records Oversight', renderFn: loadAndRenderPatients },
+          { navId: 'nav-billing', sectionId: 'section-billing', title: 'Ledger Audit Center', renderFn: loadAndRenderBilling },
+          { navId: 'nav-logs', sectionId: 'section-logs', title: 'Operations History Logs', renderFn: loadAndRenderLogs }
+        ];
+
+        tabs.forEach(tab => {
+          const navEl = document.getElementById(tab.navId);
+          if (navEl) {
+            navEl.addEventListener('click', (e) => {
+              e.preventDefault();
+              
+              // Deactivate all
+              tabs.forEach(t => {
+                const el = document.getElementById(t.navId);
+                if (el) el.classList.remove('active');
+                const sec = document.getElementById(t.sectionId);
+                if (sec) sec.classList.add('hidden');
+              });
+              
+              // Activate selected
+              navEl.classList.add('active');
+              const activeSec = document.getElementById(tab.sectionId);
+              if (activeSec) activeSec.classList.remove('hidden');
+              
+              headerTitle.textContent = tab.title;
+              tab.renderFn();
+            });
+          }
+        });
+
+        // ----------------------------------------
+        // TAB 1: Account Approvals Logic
+        // ----------------------------------------
+        const tableBodyApprovals = document.getElementById('doctors-table-body');
+        const searchInput = document.getElementById('admin-search-input');
+        const filterStatus = document.getElementById('admin-filter-status');
+        const totalStat = document.getElementById('stat-total-doctors');
+        const pendingStat = document.getElementById('stat-pending-doctors');
+        const verifiedStat = document.getElementById('stat-verified-doctors');
+
+        function loadAndRenderApprovals() {
+          const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+
+          // Stats
+          const totalCount = users.length;
+          const pendingCount = users.filter(u => u.verified === false).length;
+          const verifiedCount = users.filter(u => u.verified === true || u.verified === undefined).length;
+
+          totalStat.textContent = totalCount;
+          pendingStat.textContent = pendingCount;
+          verifiedStat.textContent = verifiedCount;
+
+          const query = searchInput.value.toLowerCase().trim();
+          const filter = filterStatus.value;
+
+          const filteredUsers = users.filter(u => {
+            const matchesQuery = u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query);
+            let matchesStatus = true;
+            const isVerified = u.verified !== false; // Default verified if legacy
+
+            if (filter === 'pending') {
+              matchesStatus = !isVerified;
+            } else if (filter === 'verified') {
+              matchesStatus = isVerified;
+            }
+            return matchesQuery && matchesStatus;
+          });
+
+          if (filteredUsers.length === 0) {
+            tableBodyApprovals.innerHTML = `
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+                  No clinical accounts found matching approvals criteria.
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tableBodyApprovals.innerHTML = filteredUsers.map(u => {
+            const isVerified = u.verified !== false;
+            const statusBadge = isVerified 
+              ? '<span class="badge bg-success-glow">VERIFIED</span>' 
+              : '<span class="badge bg-warning-glow">PENDING</span>';
+
+            const toggleButton = isVerified
+              ? `<button class="btn btn-secondary btn-sm" onclick="toggleVerification('${u.email}', false)">Revoke</button>`
+              : `<button class="btn btn-success btn-sm" onclick="toggleVerification('${u.email}', true)">Verify</button>`;
+
+            return `
+              <tr>
+                <td><strong>${u.name}</strong></td>
+                <td>${u.email}</td>
+                <td class="nowrap">${u.phone || 'N/A'}</td>
+                <td>${u.role ? u.role.toUpperCase() : 'DOCTOR'}</td>
+                <td class="nowrap">${statusBadge}</td>
+                <td class="nowrap" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+                  ${toggleButton}
+                  <button class="btn btn-danger btn-sm" onclick="deleteVerificationUser('${u.email}')">Delete</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          if (window.lucide) window.lucide.createIcons({ node: tableBodyApprovals });
+        }
+
+        window.toggleVerification = (email, status) => {
+          const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+          const idx = users.findIndex(u => u.email === email);
+          if (idx === -1) return;
+
+          if (!status) {
+            // Revoke immediately
+            users[idx].verified = false;
+            localStorage.setItem('opscare_users', JSON.stringify(users));
+            Toasts.warning(`Verification revoked: ${users[idx].name}`);
+            loadAndRenderApprovals();
+            return;
+          }
+
+          // Verify: prompt with a modal to assign shift schedule
+          const newUser = users[idx];
+          const registeredSpecialty = newUser.specialty || '';
+          const userRoleKey = newUser.role || 'doctor';
+          
+          const APPROVAL_SPECIALTIES = {
+            doctor: ['Cardiology', 'Emergency Medicine', 'Pediatrics', 'General Practice', 'Intensive Care (ICU)'],
+            nurse: ['General Nursing', 'ICU Nursing', 'Emergency Nursing', 'Pediatric Nursing'],
+            technician: ['Laboratory Services', 'Radiology & Imaging', 'Pharmacy Operations', 'Medical Equipment Tech'],
+            staff: ['Operations Management', 'Ward Allocations', 'Chief Nursing Office']
+          };
+
+          const specList = APPROVAL_SPECIALTIES[userRoleKey] || APPROVAL_SPECIALTIES.doctor;
+          const specOptions = specList.map(s => `<option value="${s}" ${s === registeredSpecialty ? 'selected' : ''}>${s}</option>`).join('');
+          const roleLabel = newUser.role === 'nurse' ? 'Nurse' : (newUser.role === 'technician' ? 'Technician' : (newUser.role === 'staff' ? 'Support Staff' : 'Doctor'));
+
+          const modalBody = `
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin:0;">Confirm specialty and shift assignment to complete clinical registration for <strong>${newUser.name}</strong>.</p>
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" class="form-control" value="${newUser.name}" readonly style="background-color:var(--bg-app); opacity:0.8;">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Account Type</label>
+                  <input type="text" class="form-control" value="${roleLabel}" readonly style="background-color:var(--bg-app); opacity:0.8;">
+                </div>
+                <div class="form-group full-width">
+                  <label class="form-label" for="verify-adm-spec">Clinical Specialty / Department</label>
+                  <select id="verify-adm-spec" class="form-control" style="font-size: 0.85rem; height: 36px; padding: 6px 12px;">
+                    ${specOptions}
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <label class="form-label" for="verify-adm-shift">Assign Shift Schedule</label>
+                  <select id="verify-adm-shift" class="form-control" style="font-size: 0.85rem; height: 36px; padding: 6px 12px;">
+                    <option value="Day (08:00 - 16:00)">Day Shift (08:00 - 16:00)</option>
+                    <option value="Night (16:00 - 24:00)">Night Shift (16:00 - 24:00)</option>
+                    <option value="Graveyard (24:00 - 08:00)">Graveyard Shift (24:00 - 08:00)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          `;
+
+          Modal.open('Confirm Clinical Verification', modalBody, [
+            {
+              text: 'Cancel',
+              className: 'btn-secondary',
+              onClick: () => Modal.close()
+            },
+            {
+              text: 'Approve & Roster Account',
+              className: 'btn-primary',
+              onClick: () => {
+                const specVal = document.getElementById('verify-adm-spec').value;
+                const shiftVal = document.getElementById('verify-adm-shift').value;
+                
+                // Update user verification and specialty
+                users[idx].verified = true;
+                users[idx].specialty = specVal;
+                localStorage.setItem('opscare_users', JSON.stringify(users));
+
+                // Add to Roster
+                const staff = JSON.parse(localStorage.getItem('opscare_staff')) || [];
+                const exists = staff.some(s => s.email === newUser.email);
+                if (!exists) {
+                  const uniqueId = Utils.generateId('STF', staff);
+                  const newRosterMember = {
+                    id: uniqueId,
+                    name: newUser.name,
+                    role: roleLabel,
+                    specialty: specVal,
+                    status: 'on-duty',
+                    phone: newUser.phone || '555-0100',
+                    email: newUser.email,
+                    shift: shiftVal
+                  };
+                  staff.push(newRosterMember);
+                  localStorage.setItem('opscare_staff', JSON.stringify(staff));
+
+                  // Add log entry
+                  const logs = JSON.parse(localStorage.getItem('opscare_logs')) || [];
+                  const dateStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+                  logs.unshift({ 
+                    date: dateStr, 
+                    type: 'info', 
+                    text: `Verified account ${newUser.name} added to Roster with Specialty: ${specVal}, Shift: ${shiftVal}.` 
+                  });
+                  localStorage.setItem('opscare_logs', JSON.stringify(logs));
+                }
+
+                Toasts.success(`Account approved: ${newUser.name}`);
+                Modal.close();
+                loadAndRenderApprovals();
+              }
+            }
+          ]);
+        };
+
+        window.deleteVerificationUser = (email) => {
+          if (confirm(`Are you sure you want to permanently delete the profile linked to ${email}?`)) {
+            let users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+            const user = users.find(u => u.email === email);
+            users = users.filter(u => u.email !== email);
+            localStorage.setItem('opscare_users', JSON.stringify(users));
+            Toasts.warning(`Deleted profile: ${user ? user.name : email}`);
+            loadAndRenderApprovals();
+          }
+        };
+
+        searchInput.oninput = loadAndRenderApprovals;
+        filterStatus.onchange = loadAndRenderApprovals;
+
+
+        // ----------------------------------------
+        // TAB 2: Roster Management Logic
+        // ----------------------------------------
+        const rosterTableBody = document.getElementById('roster-table-body');
+
+        function loadAndRenderStaff() {
+          const staff = Store.getStaff();
+
+          if (staff.length === 0) {
+            rosterTableBody.innerHTML = `
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+                  No clinical roster staff members found in the database.
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          rosterTableBody.innerHTML = staff.map(s => {
+            let badgeClass = 'bg-info-glow text-info';
+            if (s.role === 'Doctor') badgeClass = 'bg-primary-glow text-primary';
+            if (s.role === 'Technician') badgeClass = 'bg-warning-glow text-warning';
+
+            return `
+              <tr>
+                <td class="nowrap"><span style="font-family:monospace; font-weight:600; font-size:0.75rem; background-color:var(--bg-app); padding:3px 6px; border-radius:4px;">${s.id}</span></td>
+                <td><strong>${s.name}</strong><br><small style="color:var(--text-muted);">${s.email} | ${s.phone}</small></td>
+                <td><span class="badge ${badgeClass}">${s.role}</span></td>
+                <td><strong>${s.specialty}</strong></td>
+                <td>${s.shift}</td>
+                <td><span class="badge ${s.status === 'on-duty' ? 'bg-success-glow text-success' : 'bg-warning-glow text-warning'}">${s.status.toUpperCase()}</span></td>
+                <td class="nowrap" style="text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+                  <button class="btn btn-secondary btn-sm" onclick="editRosterStaff('${s.id}')">Edit</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteRosterStaff('${s.id}')">Remove</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          if (window.lucide) window.lucide.createIcons({ node: rosterTableBody });
+        }
+
+        window.deleteRosterStaff = (id) => {
+          if (confirm(`Permanently remove staff member ${id} from roster and delete their login account?`)) {
+            const staff = Store.getStaff();
+            const member = staff.find(s => s.id === id);
+            
+            // Remove from roster
+            const filtered = staff.filter(s => s.id !== id);
+            localStorage.setItem('opscare_staff', JSON.stringify(filtered));
+            
+            // Cascade delete user account
+            if (member && member.email) {
+              let users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+              users = users.filter(u => u.email.toLowerCase() !== member.email.toLowerCase());
+              localStorage.setItem('opscare_users', JSON.stringify(users));
+            }
+
+            Toasts.warning(`Staff roster member and login account removed.`);
+            loadAndRenderStaff();
+            if (window.loadAndRenderApprovals) loadAndRenderApprovals();
+          }
+        };
+
+        window.editRosterStaff = (id) => {
+          const staff = Store.getStaff();
+          const member = staff.find(s => s.id === id);
+          if (!member) return;
+
+          const modalBody = `
+            <form id="admin-edit-staff-form" class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-id">Staff ID</label>
+                <input type="text" id="stf-edt-id" class="form-control" value="${member.id}" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-name">Full Name</label>
+                <input type="text" id="stf-edt-name" class="form-control" value="${member.name}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-role">Role Designator</label>
+                <select id="stf-edt-role" class="form-control">
+                  <option value="Doctor" ${member.role === 'Doctor' ? 'selected' : ''}>Physician (Doctor)</option>
+                  <option value="Nurse" ${member.role === 'Nurse' ? 'selected' : ''}>Nursing Care Staff</option>
+                  <option value="Technician" ${member.role === 'Technician' ? 'selected' : ''}>Lab/Technical Operator</option>
+                  <option value="Support Staff" ${member.role === 'Support Staff' ? 'selected' : ''}>Clinical Staff (Allocator)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-spec">Clinical Specialty / Area</label>
+                <select id="stf-edt-spec" class="form-control">
+                  <!-- Loaded dynamically -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-shift">Shift Assignment</label>
+                <select id="stf-edt-shift" class="form-control">
+                  <option value="Day (08:00 - 16:00)" ${member.shift.includes('08:00') ? 'selected' : ''}>Day Shift (08:00 - 16:00)</option>
+                  <option value="Night (16:00 - 24:00)" ${member.shift.includes('16:00') ? 'selected' : ''}>Night Shift (16:00 - 24:00)</option>
+                  <option value="Graveyard (24:00 - 08:00)" ${member.shift.includes('24:00') ? 'selected' : ''}>Graveyard Shift (24:00 - 08:00)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-email">Email Address</label>
+                <input type="email" id="stf-edt-email" class="form-control" value="${member.email}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="stf-edt-phone">Phone / Pager Line</label>
+                <input type="tel" id="stf-edt-phone" class="form-control" value="${member.phone}" required>
+              </div>
+            </form>
+          `;
+
+          Modal.open('Edit Staff Roster Details', modalBody, [
+            {
+              text: 'Cancel',
+              className: 'btn-secondary',
+              onClick: () => Modal.close()
+            },
+            {
+              text: 'Save Changes',
+              className: 'btn-primary',
+              onClick: () => {
+                const form = document.getElementById('admin-edit-staff-form');
+                if (form.reportValidity()) {
+                  const oldEmail = member.email;
+                  member.name = document.getElementById('stf-edt-name').value;
+                  member.role = document.getElementById('stf-edt-role').value;
+                  member.specialty = document.getElementById('stf-edt-spec').value;
+                  member.shift = document.getElementById('stf-edt-shift').value;
+                  member.email = document.getElementById('stf-edt-email').value;
+                  member.phone = document.getElementById('stf-edt-phone').value;
+
+                  const sIdx = staff.findIndex(s => s.id === id);
+                  if (sIdx !== -1) {
+                    staff[sIdx] = member;
+                    localStorage.setItem('opscare_staff', JSON.stringify(staff));
+
+                    // Sync user account profile
+                    let users = JSON.parse(localStorage.getItem('opscare_users')) || [];
+                    const uIdx = users.findIndex(u => u.email.toLowerCase() === oldEmail.toLowerCase());
+                    if (uIdx !== -1) {
+                      users[uIdx].name = member.name;
+                      users[uIdx].email = member.email.toLowerCase();
+                      users[uIdx].phone = member.phone;
+                      users[uIdx].specialty = member.specialty;
+                      users[uIdx].role = member.role === 'Doctor' ? 'doctor' : (member.role === 'Nurse' ? 'nurse' : 'technician');
+                      localStorage.setItem('opscare_users', JSON.stringify(users));
+                    }
+
+                    Toasts.success(`Roster details and user account updated for ${member.name}.`);
+                    Modal.close();
+                    loadAndRenderStaff();
+                    if (window.loadAndRenderApprovals) window.loadAndRenderApprovals();
+                  }
+                }
+              }
+            }
+          ]);
+
+          // Bind dynamic role-dependent specialty selection
+          const editRoleSel = document.getElementById('stf-edt-role');
+          const editSpecSel = document.getElementById('stf-edt-spec');
+          const currentSpecialty = member.specialty;
+
+          const EDIT_SPECIALTIES = {
+            Doctor: ['Cardiology', 'Emergency Medicine', 'Pediatrics', 'General Practice', 'Intensive Care (ICU)'],
+            Nurse: ['General Nursing', 'ICU Nursing', 'Emergency Nursing', 'Pediatric Nursing'],
+            Technician: ['Laboratory Services', 'Radiology & Imaging', 'Pharmacy Operations', 'Medical Equipment Tech'],
+            'Support Staff': ['Operations Management', 'Ward Allocations', 'Chief Nursing Office']
+          };
+
+          function updateEditSpecialties() {
+            const role = editRoleSel.value;
+            const list = EDIT_SPECIALTIES[role] || [];
+            editSpecSel.innerHTML = list.map(s => `<option value="${s}" ${s === currentSpecialty ? 'selected' : ''}>${s}</option>`).join('');
+          }
+
+          editRoleSel.onchange = updateEditSpecialties;
+          updateEditSpecialties(); // Run initial load
+        };
+
+
+
+
+        // ----------------------------------------
+        // TAB 3: Patient Records Logic
+        // ----------------------------------------
+        const patientsTableBodyAdmin = document.getElementById('patients-table-body-admin');
+
+        function loadAndRenderPatients() {
+          const patients = Store.getPatients();
+
+          if (patients.length === 0) {
+            patientsTableBodyAdmin.innerHTML = `
+              <tr>
+                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+                  No patient EMR profiles found in the database.
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          patientsTableBodyAdmin.innerHTML = patients.map(p => {
+            const age = p.dob ? Utils.calculateAge(p.dob) : 'N/A';
+            const genderShort = p.gender ? p.gender.substring(0, 1) : 'U';
+            
+            return `
+              <tr>
+                <td class="nowrap"><span style="font-family:monospace; font-weight:600; font-size:0.75rem; background-color:var(--bg-app); padding:3px 6px; border-radius:4px;">${p.id}</span></td>
+                <td><strong>${p.name || 'Anonymous'}</strong><br><small style="color:var(--text-muted);">${p.diagnosis || 'No Diagnosis'}</small></td>
+                <td class="nowrap">${age}y / ${genderShort}</td>
+                <td>${Utils.getSeverityBadge(p.severity || 'low')}</td>
+                <td><strong>${p.bed || 'Unallocated'}</strong></td>
+                <td>${p.doctor || 'Unassigned'}</td>
+                <td class="nowrap">
+                  <span class="badge ${p.dischargeDate ? 'bg-secondary-glow text-secondary' : 'bg-success-glow text-success'}">
+                    ${p.dischargeDate ? 'Discharged' : 'Active Intake'}
+                  </span>
+                </td>
+                <td class="nowrap" style="text-align: right;">
+                  <button class="btn btn-danger btn-sm" onclick="purgePatientRecord('${p.id}')">Purge</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          if (window.lucide) window.lucide.createIcons({ node: patientsTableBodyAdmin });
+        }
+
+        window.purgePatientRecord = (id) => {
+          if (confirm(`Permanently purge patient ${id} and free bed allocation? This will delete all clinical flow notes.`)) {
+            Store.deletePatient(id);
+            Toasts.warning(`Patient EMR record purged.`);
+            loadAndRenderPatients();
+          }
+        };
+
+
+        // ----------------------------------------
+        // TAB 4: Billing Ledger Logic
+        // ----------------------------------------
+        const billingTableBodyAdmin = document.getElementById('billing-table-body-admin');
+
+        function loadAndRenderBilling() {
+          const invoices = Store.getBilling();
+
+          if (invoices.length === 0) {
+            billingTableBodyAdmin.innerHTML = `
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+                  No clinical invoices found in the database.
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          billingTableBodyAdmin.innerHTML = invoices.map(b => {
+            const statusBadge = b.status === 'paid'
+              ? '<span class="badge bg-success-glow text-success">PAID</span>'
+              : '<span class="badge bg-warning-glow text-warning">PENDING</span>';
+
+            return `
+              <tr>
+                <td class="nowrap"><span style="font-family:monospace; font-weight:600; font-size:0.75rem; background-color:var(--bg-app); padding:3px 6px; border-radius:4px;">${b.id}</span></td>
+                <td><strong>${b.patientName}</strong></td>
+                <td><strong>${Utils.formatCurrency(b.amount)}</strong></td>
+                <td>${b.date}</td>
+                <td>${b.dueDate}</td>
+                <td>${statusBadge}</td>
+                <td style="text-align: right;">
+                  <button class="btn btn-danger btn-sm" onclick="deleteInvoice('${b.id}')">Delete</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          if (window.lucide) window.lucide.createIcons({ node: billingTableBodyAdmin });
+        }
+
+        window.deleteInvoice = (id) => {
+          if (confirm(`Are you sure you want to permanently delete clinical invoice ${id}?`)) {
+            const invoices = Store.getBilling();
+            const filtered = invoices.filter(b => b.id !== id);
+            localStorage.setItem('opscare_billing', JSON.stringify(filtered));
+            Toasts.warning(`Invoice ${id} deleted.`);
+            loadAndRenderBilling();
+          }
+        };
+
+
+        // ----------------------------------------
+        // TAB 5: Operations Logs Logic
+        // ----------------------------------------
+        const logsTableBodyAdmin = document.getElementById('logs-table-body-admin');
+        const btnClearLogsAdmin = document.getElementById('btn-clear-logs-admin');
+
+        function loadAndRenderLogs() {
+          const logs = Store.getSystemLogs();
+
+          if (logs.length === 0) {
+            logsTableBodyAdmin.innerHTML = `
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 32px 0;">
+                  Log stream is empty.
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          logsTableBodyAdmin.innerHTML = logs.map(l => {
+            let indicatorClass = 'bg-info-glow text-info';
+            if (l.type === 'warning') indicatorClass = 'bg-warning-glow text-warning';
+            if (l.type === 'critical') indicatorClass = 'bg-danger-glow text-danger';
+
+            return `
+              <tr>
+                <td class="nowrap" style="font-family:monospace; font-size:0.75rem; color:var(--text-secondary);">${l.date}</td>
+                <td class="nowrap"><span class="badge ${indicatorClass}">${l.type.toUpperCase()}</span></td>
+                <td>${l.text}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        if (btnClearLogsAdmin) {
+          btnClearLogsAdmin.onclick = () => {
+            if (confirm('Are you sure you want to completely clear the operations historical log stream?')) {
+              localStorage.setItem('opscare_logs', JSON.stringify([]));
+              Toasts.warning('Historical log stream cleared.');
+              loadAndRenderLogs();
+            }
+          };
+        }
+
+
+        // Initial page render load
+        loadAndRenderApprovals();
+      });
+    </script>
+  </body>
+</html>

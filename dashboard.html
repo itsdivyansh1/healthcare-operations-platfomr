@@ -134,6 +134,7 @@
                   title="View Patient Directory"
                 >
                   <span
+                    id="db-title-patients"
                     style="
                       font-size: 0.8rem;
                       font-weight: 600;
@@ -142,6 +143,7 @@
                     >Active EHR Patients</span
                   >
                   <div
+                    id="db-stat-patients"
                     style="
                       font-size: 1.85rem;
                       font-weight: 700;
@@ -152,6 +154,7 @@
                     18
                   </div>
                   <div
+                    id="db-sub-patients"
                     style="
                       font-size: 0.65rem;
                       color: var(--text-muted);
@@ -168,6 +171,7 @@
                   title="View Wards Bed Map"
                 >
                   <span
+                    id="db-title-beds"
                     style="
                       font-size: 0.8rem;
                       font-weight: 600;
@@ -176,6 +180,7 @@
                     >Beds Allocated</span
                   >
                   <div
+                    id="db-stat-beds"
                     style="
                       font-size: 1.85rem;
                       font-weight: 700;
@@ -186,6 +191,7 @@
                     12 / 24
                   </div>
                   <div
+                    id="db-sub-beds"
                     style="
                       font-size: 0.65rem;
                       color: var(--text-muted);
@@ -202,6 +208,7 @@
                   title="View Staff Shift Roster"
                 >
                   <span
+                    id="db-title-staff"
                     style="
                       font-size: 0.8rem;
                       font-weight: 600;
@@ -210,6 +217,7 @@
                     >Staff On-Duty</span
                   >
                   <div
+                    id="db-stat-staff"
                     style="
                       font-size: 1.85rem;
                       font-weight: 700;
@@ -220,6 +228,7 @@
                     8
                   </div>
                   <div
+                    id="db-sub-staff"
                     style="
                       font-size: 0.65rem;
                       color: var(--text-muted);
@@ -236,6 +245,7 @@
                   title="View Consultations Scheduler"
                 >
                   <span
+                    id="db-title-consults"
                     style="
                       font-size: 0.8rem;
                       font-weight: 600;
@@ -244,6 +254,7 @@
                     >Consults Booked</span
                   >
                   <div
+                    id="db-stat-consults"
                     style="
                       font-size: 1.85rem;
                       font-weight: 700;
@@ -266,7 +277,7 @@
               </div>
 
               <!-- Row 2: Analytics & Map Grid -->
-              <div class="grid-cols-2" style="margin-bottom: 24px">
+              <div class="grid-cols-2" id="dashboard-widgets-container" style="margin-bottom: 24px">
                 <!-- Trend Line Chart -->
                 <div
                   class="card"
@@ -326,7 +337,7 @@
               </div>
 
               <!-- Row 3: Broadcaster Console -->
-              <div class="card" style="padding: 20px">
+              <div class="card" id="ops-dispatch-card" style="padding: 20px">
                 <div class="card-title" style="margin-bottom: 12px">
                   <i
                     data-lucide="megaphone"
@@ -388,7 +399,7 @@
                 data-lucide="activity"
                 style="color: var(--primary); width: 14px; height: 14px"
               ></i>
-              <span>Real-time Clinical Telemetry</span>
+              <span id="telemetry-panel-title">Real-time Clinical Telemetry</span>
             </div>
             <div class="workspace-right-content">
               <div class="telemetry-card">
@@ -400,7 +411,7 @@
                     margin-bottom: 8px;
                   "
                 >
-                  <span>Bed Allocation Capacity</span>
+                  <span id="telemetry-gauge-title">Bed Allocation Capacity</span>
                 </div>
                 <div id="telemetry-beds-gauge"></div>
               </div>
@@ -413,6 +424,7 @@
                 "
               >
                 <span
+                  id="telemetry-stock-title"
                   style="
                     font-size: 0.7rem;
                     font-weight: 600;
@@ -489,56 +501,11 @@
     <!-- Init Script -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // 1. Render Dashboard dynamic metrics
-        const patients = Store.getPatients();
-        const beds = Store.getBeds();
-        const staff = Store.getStaff();
-        const appointments = Store.getAppointments();
-
-        const activePatients = patients.filter((p) => !p.dischargeDate).length;
-        const occupiedBeds = beds.filter(
-          (b) => b.status !== "available",
-        ).length;
-        const staffOnDuty = staff.filter((s) => s.status === "on-duty").length;
-        const aptsPending = appointments.filter(
-          (a) => a.status === "scheduled",
-        ).length;
-
-        // Update stat grid card texts
-        const statCards = document.querySelectorAll(
-          ".dashboard-metrics-grid .card",
-        );
-        if (statCards.length >= 4) {
-          statCards[0].querySelector("div").textContent = activePatients;
-          statCards[1].querySelector("div").textContent =
-            `${occupiedBeds} / ${beds.length}`;
-          statCards[2].querySelector("div").textContent = staffOnDuty;
-          statCards[3].querySelector("div").textContent = aptsPending;
-        }
-
-        // 2. Initialize View Controller
+        // Initialize View Controller
         DashboardView.init();
 
-        // 3. Register to live store updates to refresh metrics
+        // Register to live store updates to refresh metrics
         Store.subscribe("all", () => {
-          const freshPatients = Store.getPatients();
-          const freshBeds = Store.getBeds();
-          const freshStaff = Store.getStaff();
-          const freshApts = Store.getAppointments();
-
-          if (statCards.length >= 4) {
-            statCards[0].querySelector("div").textContent =
-              freshPatients.filter((p) => !p.dischargeDate).length;
-            statCards[1].querySelector("div").textContent =
-              `${freshBeds.filter((b) => b.status !== "available").length} / ${freshBeds.length}`;
-            statCards[2].querySelector("div").textContent = freshStaff.filter(
-              (s) => s.status === "on-duty",
-            ).length;
-            statCards[3].querySelector("div").textContent = freshApts.filter(
-              (a) => a.status === "scheduled",
-            ).length;
-          }
-
           DashboardView.init();
         });
       });

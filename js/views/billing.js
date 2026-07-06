@@ -114,6 +114,24 @@ const BillingView = {
 
     let bills = Store.getBilling();
 
+    const activeUserJson = sessionStorage.getItem('opscare_active_user');
+    if (activeUserJson) {
+      const activeUser = JSON.parse(activeUserJson);
+      if (activeUser.role !== 'staff' && activeUser.role !== 'admin') {
+        const patients = Store.getPatients();
+        let myPatients = [];
+        if (activeUser.role === 'doctor') {
+          myPatients = patients.filter(p => p.doctor && p.doctor.toLowerCase().includes(activeUser.name.toLowerCase()));
+        } else if (activeUser.role === 'nurse') {
+          myPatients = patients.filter(p => p.nurse && p.nurse.toLowerCase().includes(activeUser.name.toLowerCase()));
+        } else if (activeUser.role === 'technician') {
+          myPatients = patients.filter(p => p.technician && p.technician.toLowerCase().includes(activeUser.name.toLowerCase()));
+        }
+        const patientIds = myPatients.map(p => p.id);
+        bills = bills.filter(b => patientIds.includes(b.patientId));
+      }
+    }
+
     // Apply Status Filter
     if (this.currentStatusFilter === 'pending') {
       bills = bills.filter(b => b.status === 'pending' || b.status === 'overdue');

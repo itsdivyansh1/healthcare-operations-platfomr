@@ -25,12 +25,12 @@
       
       <!-- Login Section -->
       <div id="login-form-section">
-        <h3 class="auth-title">Clinical Staff Sign-In</h3>
-        <p class="auth-subtitle">Authorized institutional access required.</p>
+        <h3 class="auth-title">Sign-In to OpsCare</h3>
+        <p class="auth-subtitle">Please enter your authorized console credentials.</p>
         
         <form id="login-form" novalidate>
           <div class="form-group">
-            <label class="form-label" for="login-email">Secure Institutional Email</label>
+            <label class="form-label" for="login-email">Email Address</label>
             <input type="email" id="login-email" class="form-control" placeholder="d.ross@hospital.org" required>
             <span class="error-text hidden" id="err-login-email"></span>
           </div>
@@ -45,38 +45,53 @@
         </form>
         
         <p class="auth-toggle-prompt">
-          New clinic member? <button type="button" class="auth-toggle-link" id="toggle-to-register">Register Account</button>
+          Need a new account? <button type="button" class="auth-toggle-link" id="toggle-to-register">Register Here</button>
         </p>
       </div>
       
       <!-- Register Section -->
       <div id="register-form-section" class="hidden">
-        <h3 class="auth-title">Register Clinical Profile</h3>
-        <p class="auth-subtitle">Create security keys for OpsCare access.</p>
+        <h3 class="auth-title">Create OpsCare Account</h3>
+        <p class="auth-subtitle">Register your details for console access.</p>
         
         <form id="register-form" novalidate>
           <div class="form-group">
-            <label class="form-label" for="reg-name">Full Professional Name</label>
+            <label class="form-label" for="reg-name">Full Name</label>
             <input type="text" id="reg-name" class="form-control" placeholder="Dr. Karen Vance" required>
             <span class="error-text hidden" id="err-reg-name"></span>
           </div>
           <div class="form-group">
-            <label class="form-label" for="reg-email">Institutional Email Address</label>
+            <label class="form-label" for="reg-email">Email Address</label>
             <input type="email" id="reg-email" class="form-control" placeholder="k.vance@hospital.org" required>
             <span class="error-text hidden" id="err-reg-email"></span>
           </div>
           <div class="form-group">
-            <label class="form-label" for="reg-phone">Secure Phone / Pager Line (Indian format)</label>
+            <label class="form-label" for="reg-phone">Phone / Mobile Line (Indian format)</label>
             <input type="tel" id="reg-phone" class="form-control" placeholder="10-digit number starting with 6-9" required>
             <span class="error-text hidden" id="err-reg-phone"></span>
           </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-role">Account Type / Role</label>
+            <select id="reg-role" class="form-control" required style="font-size: 0.85rem; height: 36px; padding: 6px 12px;">
+              <option value="doctor">Doctor (Diagnostics, EMR & Billing)</option>
+              <option value="nurse">Nursing Care (Bed Allocations & EMR Read)</option>
+              <option value="technician">Lab/Technical Operator (Inventory & EMR Read)</option>
+              <option value="staff">Clinical Staff (Operations Allocator)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-specialty">Clinical Specialty / Department</label>
+            <select id="reg-specialty" class="form-control" required style="font-size: 0.85rem; height: 36px; padding: 6px 12px;">
+              <!-- Dynamically populated based on role -->
+            </select>
+          </div>
           <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label" for="reg-password">Security Password</label>
+            <label class="form-label" for="reg-password">Password</label>
             <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
             <span class="error-text hidden" id="err-reg-password"></span>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%; height:34px;">
-            <i data-lucide="user-plus" style="width:14px; height:14px; margin-right:4px;"></i> Register Account
+            <i data-lucide="user-plus" style="width:14px; height:14px; margin-right:4px;"></i> Create Account
           </button>
         </form>
         
@@ -118,12 +133,53 @@
       const loginForm = document.getElementById('login-form');
       const registerForm = document.getElementById('register-form');
 
+      // Dynamic Role-dependent Specialty Options
+      const roleSelect = document.getElementById('reg-role');
+      const specialtySelect = document.getElementById('reg-specialty');
+
+       const SPECIALTIES_BY_ROLE = {
+        doctor: [
+          { value: 'Cardiology', text: 'Cardiology' },
+          { value: 'Emergency Medicine', text: 'Emergency Medicine' },
+          { value: 'Pediatrics', text: 'Pediatrics' },
+          { value: 'General Practice', text: 'General Practice' },
+          { value: 'Intensive Care (ICU)', text: 'Intensive Care (ICU)' }
+        ],
+        nurse: [
+          { value: 'General Nursing', text: 'General Nursing' },
+          { value: 'ICU Nursing', text: 'ICU Nursing' },
+          { value: 'Emergency Nursing', text: 'Emergency Nursing' },
+          { value: 'Pediatric Nursing', text: 'Pediatric Nursing' }
+        ],
+        technician: [
+          { value: 'Laboratory Services', text: 'Laboratory Services' },
+          { value: 'Radiology & Imaging', text: 'Radiology & Imaging' },
+          { value: 'Pharmacy Operations', text: 'Pharmacy Operations' },
+          { value: 'Medical Equipment Tech', text: 'Medical Equipment Tech' }
+        ],
+        staff: [
+          { value: 'Operations Management', text: 'Operations Management' },
+          { value: 'Ward Allocations', text: 'Ward Allocations' },
+          { value: 'Chief Nursing Office', text: 'Chief Nursing Office' }
+        ]
+      };
+
+      function updateSpecialtyOptions() {
+        const role = roleSelect.value;
+        const opts = SPECIALTIES_BY_ROLE[role] || [];
+        specialtySelect.innerHTML = opts.map(o => `<option value="${o.value}">${o.text}</option>`).join('');
+      }
+
+      roleSelect.onchange = updateSpecialtyOptions;
+      updateSpecialtyOptions(); // Initialize
+
       // Form Toggles
       toggleToReg.onclick = () => {
         loginSection.classList.add('hidden');
         registerSection.classList.remove('hidden');
         clearErrors();
         registerForm.reset();
+        updateSpecialtyOptions();
       };
 
       toggleToLogin.onclick = () => {
@@ -156,7 +212,9 @@
         const name = document.getElementById('reg-name').value.trim();
         const email = document.getElementById('reg-email').value.trim().toLowerCase();
         const phone = document.getElementById('reg-phone').value.trim();
+        const specialty = document.getElementById('reg-specialty').value.trim();
         const password = document.getElementById('reg-password').value;
+        const role = document.getElementById('reg-role').value;
 
         let hasError = false;
 
@@ -177,6 +235,11 @@
           hasError = true;
         } else if (!/^[6-9][0-9]{9}$/.test(phone)) {
           showFieldError('err-reg-phone', 'Enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9.');
+          hasError = true;
+        }
+
+        if (!specialty) {
+          showFieldError('err-reg-specialty', 'Specialty / clinical area is required.');
           hasError = true;
         }
 
@@ -213,16 +276,18 @@
           return;
         }
 
-        const newUser = { name, email, phone, password };
+        const newUser = { name, email, phone, specialty, password, role: role, verified: false };
         users.push(newUser);
         localStorage.setItem('opscare_users', JSON.stringify(users));
 
-        sessionStorage.setItem('opscare_active_user', JSON.stringify(newUser));
-        Toasts.success('Profile created and logged in.');
-
+        Toasts.success('Registration successful! Pending administrator verification.');
+        
         setTimeout(() => {
-          window.location.href = 'dashboard.html';
-        }, 800);
+          registerSection.classList.add('hidden');
+          loginSection.classList.remove('hidden');
+          clearErrors();
+          loginForm.reset();
+        }, 1500);
       };
 
       // Login Form validation & submit
@@ -247,23 +312,81 @@
 
         if (hasError) return;
 
+        // Admin Credentials check
+        if (email === 'admin@opscare.com' && password === 'AdminPassword1!') {
+          const adminUser = {
+            name: 'OpsCare System Admin',
+            email: 'admin@opscare.com',
+            role: 'admin',
+            verified: true
+          };
+          sessionStorage.setItem('opscare_active_user', JSON.stringify(adminUser));
+          Toasts.success('Administrator access granted.');
+          setTimeout(() => {
+            window.location.href = 'admin.html';
+          }, 800);
+          return;
+        }
+
         const users = JSON.parse(localStorage.getItem('opscare_users')) || [];
         
         // Auto-seed default credentials if localDB is empty
         if (users.length === 0) {
-          const seedUser = {
-            name: 'Dr. Daniel Ross',
-            email: 'd.ross@hospital.org',
-            phone: '9876543210', // Starts with 9 (valid Indian phone number)
-            password: 'Password1!'
-          };
-          users.push(seedUser);
-          localStorage.setItem('opscare_users', JSON.stringify(users));
+          const seedUsers = [
+            {
+              name: 'Dr. Daniel Ross',
+              email: 'd.ross@hospital.org',
+              phone: '9876543210',
+              password: 'Password1!',
+              role: 'doctor',
+              specialty: 'Internal Medicine',
+              verified: true
+            },
+            {
+              name: 'Nurse Emily Vance',
+              email: 'e.vance@hospital.org',
+              phone: '9876500001',
+              password: 'Password1!',
+              role: 'nurse',
+              specialty: 'ICU Care',
+              verified: true
+            },
+            {
+              name: 'Technician Jordan Vance',
+              email: 'j.vance@hospital.org',
+              phone: '9876500002',
+              password: 'Password1!',
+              role: 'technician',
+              specialty: 'Laboratory Services',
+              verified: true
+            },
+            {
+              name: 'Clinical Staff Allocator',
+              email: 'staff@opscare.com',
+              phone: '9876500003',
+              password: 'Password1!',
+              role: 'staff',
+              specialty: 'Operations Management',
+              verified: true
+            }
+          ];
+          localStorage.setItem('opscare_users', JSON.stringify(seedUsers));
         }
 
         const matchUser = users.find(u => u.email === email && u.password === password);
 
         if (matchUser) {
+          const userRole = matchUser.role || 'doctor';
+          const isVerified = matchUser.verified !== undefined ? matchUser.verified : true;
+
+          if (!isVerified) {
+            showFieldError('err-login-password', 'Access denied: Pending administrator verification.');
+            return;
+          }
+
+          matchUser.role = userRole;
+          matchUser.verified = isVerified;
+
           sessionStorage.setItem('opscare_active_user', JSON.stringify(matchUser));
           Toasts.success(`Access granted. Welcome, ${matchUser.name}`);
           setTimeout(() => {
